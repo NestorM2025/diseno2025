@@ -1,48 +1,71 @@
 import socket
-import threading
 import json
-from flask import Flask, jsonify
-from flask_cors import CORS   # Para habilitar CORS
+import mysql.connector
+import os
+from dotenv import load_dotenv
 
-# Lista para guardar los datos recibidos
-data_store = []
+# ==========================
+# 1. Cargar variables de entorno
+# ==========================
+load_dotenv()  # Carga las variables desde el archivo .env
 
-# Configuración de Flask
-app = Flask(__name__)
-CORS(app)  # Habilita CORS en todas las rutas
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
 
-@app.route('/data.json')
-def get_data():
-    """Devuelve todos los datos recibidos en formato JSON"""
-    return jsonify(data_store)
+try:
+    db = mysql.connector.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASS,
+        database=DB_NAME
+    )
+    cursor = db.cursor()
+    print("✅ Conexión exitosa a la base de datos")
+except Exception as e:
+    print(f"❌ Error conectando a la base de datos: {e}")
+    exit(1)
 
-def udp_listener(host="0.0.0.0", port=5000):
-    """Escucha paquetes UDP y los guarda en data_store"""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((host, port))
-    print(f"✅ Escuchando UDP en {host}:{port}...")
+# ==========================
+# 2. Configuración UDP
+# ==========================
+UDP_IP = "0.0.0.0"   # Escucha en todas las interfaces
+UDP_PORT = 5000      # Puerto UDP
 
-    while True:
-        data, addr = sock.recvfrom(1024)
-        try:
-            msg = json.loads(data.decode('utf-8'))
-            print(f"📩 Recibido de {addr}: {msg}")
-            data_store.append(msg)
-            # Si quieres limitar a los últimos N datos:
-            if len(data_store) > 100:
-                data_store.pop(0)
-        except Exception as e:
-            print(f"⚠️ Error procesando paquete: {e}")
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.bind((UDP_IP, UDP_PORT))
 
-def start_flask():
-    """Inicia la API Flask"""
-    print("🌐 API Flask corriendo en http://0.0.0.0:8080/data.json")
-    app.run(host="0.0.0.0", port=8080, debug=False)
+print(f"📡 Sniffer escuchando en {UDP_IP}:{UDP_PORT}...")
 
-if __name__ == "__main__":
-    # Hilo para escuchar UDP
-    udp_thread = threading.Thread(target=udp_listener, daemon=True)
-    udp_thread.start()
+# ==========================
+# 3. Bucle de recepción
+# ==========================
+while True:
+    data, addr = sock.recvfrom(1024)  # Recibe datos
+    mensaje = data.decode().strip()
+    print(f"📩 Recibido: {mensaje} de {addr}")
 
-    # Inicia Flask en el hilo principal
-    start_flask()
+    try:
+        # Convertir JSON a diccionario
+        data_json = json.loads(mensaje)
+
+        # Extraer valores
+        lat = float(data_json["Latitud"])
+        lon = float(data_json["Longitud"])
+        fecha = data_json["Fecha"]   # formato: YYYY-MM-DD
+        hora = data_json["Hora"]     # formato: HH:MM:SS
+
+        # Insertar en la base
+        sql = "INSERT INTO locations2 (lat, lon, fecha, hora) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (lat, lon, fecha, hora))
+        db.commit()
+
+        print(f"✅ Guardado en DB -> lat:{lat}, lon:{lon}, fecha:{fecha}, hora:{hora}")
+
+    except json.JSONDecodeError:
+        print("❌ Error: No se pudo decodificar el JSON")
+    except KeyError as e:
+        print(f"❌ Error: Clave faltante en el JSON -> {e}")
+    except Exception as e:
+        print(f"❌ Error general: {e}")
