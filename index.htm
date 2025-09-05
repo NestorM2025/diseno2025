@@ -2,26 +2,52 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa en tiempo real</title>
+  <title>Localización en tiempo real</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body, html {
+    body {
       margin: 0;
-      padding: 0;
-      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    header {
+      text-align: center;
+      padding: 15px;
+      background: #0078d7;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    #info {
+      background: white;
+      border: 2px solid #0078d7;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 500px;
+      margin: 15px auto;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
     }
     #map {
       width: 100%;
-      height: 100vh;
+      height: calc(100vh - 180px); /* Ajustar tamaño considerando header e info */
     }
   </style>
 </head>
 <body>
+  <header>Localización en tiempo real</header>
+  
+  <div id="info">
+    <p><b>Fecha y hora:</b> <span id="timestamp">-</span></p>
+    <p><b>Latitud:</b> <span id="lat">-</span> | <b>Longitud:</b> <span id="lon">-</span></p>
+  </div>
+
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Inicializar mapa centrado en Colombia 🇨🇴
+    // Inicializar mapa
     var map = L.map('map').setView([4.60971, -74.08175], 6);
 
     // Capa base de OpenStreetMap
@@ -35,22 +61,33 @@
       fetch('http://<IP_PUBLICA_EC2>:8080/data.json')
         .then(response => response.json())
         .then(data => {
+          if (data.length === 0) return;
+
           // Eliminar marcadores antiguos
           markers.forEach(m => map.removeLayer(m));
           markers = [];
 
-          // Dibujar nuevos puntos
-          data.forEach(point => {
-            var marker = L.marker([point.lat, point.lng])
-              .addTo(map)
-              .bindPopup(`<b>${point.timestamp}</b><br>Lat: ${point.lat}, Lon: ${point.lng}`);
-            markers.push(marker);
-          });
+          // Tomar el último punto recibido
+          var ultimo = data[data.length - 1];
+
+          // Actualizar info en el recuadro
+          document.getElementById("timestamp").innerText = ultimo.timestamp;
+          document.getElementById("lat").innerText = ultimo.lat;
+          document.getElementById("lon").innerText = ultimo.lng;
+
+          // Agregar marcador en el mapa
+          var marker = L.marker([ultimo.lat, ultimo.lng])
+            .addTo(map)
+            .bindPopup(`<b>${ultimo.timestamp}</b><br>Lat: ${ultimo.lat}, Lon: ${ultimo.lng}`);
+          markers.push(marker);
+
+          // Centrar mapa en el último punto
+          map.setView([ultimo.lat, ultimo.lng], 13);
         })
         .catch(err => console.error("⚠️ Error obteniendo JSON:", err));
     }
 
-    // Cargar datos al inicio y luego cada 5 segundos
+    // Cargar datos cada 5 segundos
     actualizarMapa();
     setInterval(actualizarMapa, 5000);
   </script>
