@@ -1,0 +1,159 @@
+/* Reset y configuración base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+  line-height: 1.6;
+}
+
+/* Header */
+header {
+  background: #333;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+/* Contenedor principal */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Tarjeta de información */
+.info-card {
+  background-color: white;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.info-card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Contenedor del mapa */
+.map-container {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+#map {
+  height: 400px;
+  width: 100%;
+  border: 2px solid #333;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Media queries para diferentes tamaños de pantalla */
+
+/* Tablets */
+@media (min-width: 768px) {
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .info-card {
+    padding: 1.5rem;
+    font-size: 1.1rem;
+  }
+  
+  #map {
+    height: 500px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .container {
+    padding: 2rem;
+  }
+  
+  .info-card {
+    padding: 2rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  #map {
+    height: 600px;
+  }
+}
+
+/* Pantallas muy grandes */
+@media (min-width: 1440px) {
+  #map {
+    height: 700px;
+  }
+}
+
+/* Mejoras para dispositivos móviles pequeños */
+@media (max-width: 480px) {
+  header {
+    padding: 0.8rem;
+  }
+  
+  h1 {
+    font-size: 1.2rem;
+  }
+  
+  .container {
+    padding: 0.8rem;
+  }
+  
+  .info-card {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+  
+  #map {
+    height: 300px;
+    border-radius: 8px;
+  }
+}
+
+/* Modo oscuro (opcional) */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+  }
+  
+  .info-card {
+    background-color: #2d2d2d;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  
+  header {
+    background: #222;
+  }
+}

@@ -2,94 +2,27 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Nestor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nestor - Localización en tiempo real</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      background: #333;
-      color: white;
-      padding: 15px;
-      margin: 0;
-    }
-    #info {
-      margin: 15px auto;
-      padding: 15px;
-      width: 80%;
-      border: 2px solid #333;
-      border-radius: 10px;
-      text-align: left;
-      background-color: #f9f9f9;
-      font-size: 16px;
-    }
-    #map {
-      height: 500px;
-      width: 90%;
-      margin: 20px auto;
-      border: 2px solid #333;
-      border-radius: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <h1>Localización en tiempo real</h1>
+  <header>
+    <h1>Localización en tiempo real</h1>
+  </header>
 
-  <div id="info">
-    <b>Esperando datos...</b>
-  </div>
+  <main class="container">
+    <div id="info" class="info-card">
+      <b>Esperando datos...</b>
+    </div>
 
-  <div id="map"></div>
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </main>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Inicializar mapa
-    const map = L.map("map").setView([4.61, -74.08], 12); // Bogotá por defecto
-
-    // Cargar tiles de OpenStreetMap
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors"
-    }).addTo(map);
-
-    let marker = null;
-
-    async function fetchData() {
-      try {
-        const response = await fetch("data.php");
-        const data = await response.json();
-
-        if (data.length > 0) {
-          const last = data[data.length - 1];
-
-          // Mostrar datos en el recuadro
-          document.getElementById("info").innerHTML = `
-            <b>Fecha/Hora:</b> ${last.timestamp}<br>
-            <b>Lat:</b> ${last.lat}<br>
-            <b>Lon:</b> ${last.lng}
-          `;
-
-          // Colocar o mover marcador en el mapa
-          if (marker) {
-            marker.setLatLng([last.lat, last.lng]);
-          } else {
-            marker = L.marker([last.lat, last.lng]).addTo(map);
-          }
-
-          // Centrar el mapa en la nueva posición
-          map.setView([last.lat, last.lng], 14);
-        }
-      } catch (err) {
-        console.error("❌ Error cargando datos:", err);
-      }
-    }
-
-    // Actualizar cada 5 segundos
-    setInterval(fetchData, 5000);
-    fetchData();
-  </script>
+  <script src="js/script.js"></script>
 </body>
 </html>
