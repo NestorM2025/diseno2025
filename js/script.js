@@ -17,11 +17,9 @@ async function fetchData() {
     if (data.length > 0) {
       const last = data[data.length - 1];
 
-      // Mostrar datos en el recuadro
+      // Mostrar datos en el recuadro en una sola línea
       document.getElementById("info").innerHTML = `
-        <b>Fecha/Hora:</b> ${last.timestamp}<br>
-        <b>Lat:</b> ${last.lat}<br>
-        <b>Lon:</b> ${last.lng}
+        <b>Fecha/Hora:</b> ${last.timestamp} | <b>Lat:</b> ${last.lat} | <b>Lon:</b> ${last.lng}
       `;
 
       // Colocar o mover marcador en el mapa
