@@ -31,7 +31,7 @@ except Exception as e:
 # 2. Configuración UDP
 # ==========================
 UDP_IP = "0.0.0.0"   # Escucha en todas las interfaces
-UDP_PORT = 5000      # Puerto UDP
+UDP_PORT = 7000      # Puerto UDP
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
