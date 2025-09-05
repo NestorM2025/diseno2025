@@ -31,8 +31,9 @@ async function fetchData() {
         marker = L.marker([last.lat, last.lng]).addTo(map);
       }
 
-      // Centrar el mapa en la nueva posición
-      map.setView([last.lat, last.lng], 14);
+      // Centrar el mapa en la nueva posición respetando el zoom actual del usuario
+      const currentZoom = map.getZoom();
+      map.setView([last.lat, last.lng], currentZoom);
     }
   } catch (err) {
     console.error("❌ Error cargando datos:", err);
