@@ -1,0 +1,20 @@
+name: Deploy to EC2 with Apache
+
+on:
+  push:          
+    branches:
+      - main    
+
+jobs:
+  deploy:
+    runs-on: self-hosted  
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Copiar archivos al servidor Apache
+        run: |
+          sudo rm -rf /var/www/html/*
+          sudo cp -r ./* /var/www/html/
+          sudo systemctl restart apache2
