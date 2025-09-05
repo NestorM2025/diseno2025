@@ -1,11 +1,13 @@
 <?php
 header('Content-Type: application/json');
 
-// Datos de conexión
-$host = "datos1.cra0e4qeof2m.us-east-2.rds.amazonaws.com";
-$user = "nestorm";
-$pass = "nestorm2025";
-$dbname = "localizador";
+// Leer variables de entorno desde .env
+$env = parse_ini_file(__DIR__ . '/.env');
+
+$host = $env['DB_HOST'];
+$user = $env['DB_USER'];
+$pass = $env['DB_PASS'];
+$dbname = $env['DB_NAME'];
 
 // Conectar a la base de datos
 $conn = new mysqli($host, $user, $pass, $dbname);
@@ -31,9 +33,6 @@ if ($result->num_rows > 0) {
     }
 }
 
-// Devolver JSON
 echo json_encode($data);
-
-// Cerrar conexión
 $conn->close();
 ?>
