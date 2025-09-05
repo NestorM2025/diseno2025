@@ -132,28 +132,12 @@ h1 {
     padding: 0.8rem;
     font-size: 0.9rem;
     border-radius: 8px;
+    width: 95%;
   }
   
   #map {
     height: 300px;
     border-radius: 8px;
-  }
-}
-
-/* Modo oscuro (opcional) */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
-  }
-  
-  .info-card {
-    background-color: #2d2d2d;
-    border-color: #555;
-    color: #e0e0e0;
-  }
-  
-  header {
-    background: #222;
+    width: 95%;
   }
 }
