@@ -3,44 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <title>Localización en tiempo real</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
-    }
-    header {
       text-align: center;
-      padding: 15px;
-      background: #0078d7;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      background: #333;
       color: white;
-      font-size: 24px;
-      font-weight: bold;
+      padding: 15px;
+      margin: 0;
     }
     #info {
-      background: white;
-      border: 2px solid #0078d7;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 500px;
       margin: 15px auto;
-      padding: 10px;
-      text-align: center;
-      box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+      padding: 15px;
+      width: 80%;
+      border: 2px solid #333;
+      border-radius: 10px;
+      text-align: left;
+      background-color: #f9f9f9;
+      font-size: 16px;
     }
     #map {
-      width: 100%;
-      height: calc(100vh - 180px); /* Ajustar tamaño considerando header e info */
+      height: 500px;
+      width: 90%;
+      margin: 20px auto;
+      border: 2px solid #333;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <header>Localización en tiempo real</header>
-  
+  <h1>Localización en tiempo real</h1>
+
   <div id="info">
-    <p><b>Fecha y hora:</b> <span id="timestamp">-</span></p>
-    <p><b>Latitud:</b> <span id="lat">-</span> | <b>Longitud:</b> <span id="lon">-</span></p>
+    <b>Esperando datos...</b>
   </div>
 
   <div id="map"></div>
@@ -48,48 +48,48 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     // Inicializar mapa
-    var map = L.map('map').setView([4.60971, -74.08175], 6);
+    const map = L.map("map").setView([4.61, -74.08], 12); // Bogotá por defecto
 
-    // Capa base de OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+    // Cargar tiles de OpenStreetMap
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
     }).addTo(map);
 
-    var markers = [];
+    let marker = null;
 
-    function actualizarMapa() {
-      fetch('http://3.15.171.144:8080/data.json')
-        .then(response => response.json())
-        .then(data => {
-          if (data.length === 0) return;
+    async function fetchData() {
+      try {
+        const response = await fetch("http://3.15.171.144:8080/data.json");
+        const data = await response.json();
 
-          // Eliminar marcadores antiguos
-          markers.forEach(m => map.removeLayer(m));
-          markers = [];
+        if (data.length > 0) {
+          const last = data[data.length - 1];
 
-          // Tomar el último punto recibido
-          var ultimo = data[data.length - 1];
+          // Mostrar datos en el recuadro
+          document.getElementById("info").innerHTML = `
+            <b>Fecha/Hora:</b> ${last.timestamp}<br>
+            <b>Lat:</b> ${last.lat}<br>
+            <b>Lon:</b> ${last.lng}
+          `;
 
-          // Actualizar info en el recuadro
-          document.getElementById("timestamp").innerText = ultimo.timestamp;
-          document.getElementById("lat").innerText = ultimo.lat;
-          document.getElementById("lon").innerText = ultimo.lng;
+          // Colocar o mover marcador en el mapa
+          if (marker) {
+            marker.setLatLng([last.lat, last.lng]);
+          } else {
+            marker = L.marker([last.lat, last.lng]).addTo(map);
+          }
 
-          // Agregar marcador en el mapa
-          var marker = L.marker([ultimo.lat, ultimo.lng])
-            .addTo(map)
-            .bindPopup(`<b>${ultimo.timestamp}</b><br>Lat: ${ultimo.lat}, Lon: ${ultimo.lng}`);
-          markers.push(marker);
-
-          // Centrar mapa en el último punto
-          map.setView([ultimo.lat, ultimo.lng], 13);
-        })
-        .catch(err => console.error("⚠️ Error obteniendo JSON:", err));
+          // Centrar el mapa en la nueva posición
+          map.setView([last.lat, last.lng], 14);
+        }
+      } catch (err) {
+        console.error("❌ Error cargando datos:", err);
+      }
     }
 
-    // Cargar datos cada 5 segundos
-    actualizarMapa();
-    setInterval(actualizarMapa, 5000);
+    // Actualizar cada 5 segundos
+    setInterval(fetchData, 5000);
+    fetchData();
   </script>
 </body>
 </html>
