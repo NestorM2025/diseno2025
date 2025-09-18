@@ -7,6 +7,8 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 }).addTo(map);
 
 let marker = null;
+let polyline = null;
+let routePoints = []; // Array para almacenar todos los puntos del recorrido
 
 // Función para obtener y actualizar datos
 async function fetchData() {
@@ -22,11 +24,26 @@ async function fetchData() {
         <b>Fecha/Hora:</b> ${last.timestamp} | <b>Lat:</b> ${last.lat} | <b>Lon:</b> ${last.lng}
       `;
 
+      // Crear array de puntos para la polyline con todos los datos
+      const allPoints = data.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+
       // Colocar o mover marcador en el mapa
       if (marker) {
         marker.setLatLng([last.lat, last.lng]);
       } else {
         marker = L.marker([last.lat, last.lng]).addTo(map);
+      }
+
+      // Crear o actualizar polyline con todo el recorrido
+      if (polyline) {
+        polyline.setLatLngs(allPoints);
+      } else {
+        polyline = L.polyline(allPoints, {
+          color: 'red',
+          weight: 3,
+          opacity: 0.8,
+          smoothFactor: 1
+        }).addTo(map);
       }
 
       // Centrar el mapa en la nueva posición respetando el zoom actual del usuario
