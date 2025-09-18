@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">
+  <title id="page-title">Cargando...</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <header>
-    <h1>Localización en tiempo Real</h1>
+    <h1 id="page-header">Cargando...</h1>
   </header>
 
   <main class="container">
@@ -24,5 +24,18 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="js/script.js"></script>
+
+  <script>
+    // Llamar a data.php para traer también el nombre de la página
+    fetch('data.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.pageName) {
+          document.title = data.pageName;
+          document.getElementById('page-header').textContent = data.pageName;
+        }
+      })
+      .catch(err => console.error(err));
+  </script>
 </body>
 </html>
