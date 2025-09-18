@@ -15,7 +15,10 @@ $conn = new mysqli($host, $user, $pass, $dbname);
 
 // Verificar conexión
 if ($conn->connect_error) {
-    echo json_encode(["error" => "Conexión fallida: " . $conn->connect_error]);
+    echo json_encode([
+        "error" => "Conexión fallida: " . $conn->connect_error,
+        "pageName" => $pageName
+    ]);
     exit;
 }
 
@@ -34,6 +37,10 @@ if ($result->num_rows > 0) {
     }
 }
 
-echo json_encode($data);
+echo json_encode([
+    "pageName" => $pageName,
+    "locations" => $data
+]);
+
 $conn->close();
 ?>
