@@ -8,7 +8,8 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 
 let marker = null;
 let polyline = null;
-let routePoints = []; // Array para almacenar todos los puntos del recorrido
+let routePoints = []; // Array para almacenar solo los puntos nuevos desde que se cargó la página
+let lastProcessedTimestamp = null; // Para controlar qué puntos ya procesamos
 
 // Función para obtener y actualizar datos
 async function fetchData() {
@@ -24,8 +25,12 @@ async function fetchData() {
         <b>Fecha/Hora:</b> ${last.timestamp} | <b>Lat:</b> ${last.lat} | <b>Lon:</b> ${last.lng}
       `;
 
-      // Crear array de puntos para la polyline con todos los datos
-      const allPoints = data.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+      // Solo añadir punto nuevo si es diferente al último procesado
+      if (lastProcessedTimestamp !== last.timestamp) {
+        const newPoint = [parseFloat(last.lat), parseFloat(last.lng)];
+        routePoints.push(newPoint);
+        lastProcessedTimestamp = last.timestamp;
+      }
 
       // Colocar o mover marcador en el mapa
       if (marker) {
@@ -34,16 +39,18 @@ async function fetchData() {
         marker = L.marker([last.lat, last.lng]).addTo(map);
       }
 
-      // Crear o actualizar polyline con todo el recorrido
-      if (polyline) {
-        polyline.setLatLngs(allPoints);
-      } else {
-        polyline = L.polyline(allPoints, {
-          color: 'red',
-          weight: 3,
-          opacity: 0.8,
-          smoothFactor: 1
-        }).addTo(map);
+      // Crear o actualizar polyline solo con los puntos nuevos acumulados
+      if (routePoints.length > 1) {
+        if (polyline) {
+          polyline.setLatLngs(routePoints);
+        } else {
+          polyline = L.polyline(routePoints, {
+            color: 'red',
+            weight: 3,
+            opacity: 0.8,
+            smoothFactor: 1
+          }).addTo(map);
+        }
       }
 
       // Centrar el mapa en la nueva posición respetando el zoom actual del usuario
