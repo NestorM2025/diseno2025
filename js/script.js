@@ -20,9 +20,8 @@ async function fetchData() {
 
     // Establecer el nombre de la página solo una vez
     if (!pageNameSet && data.pageName) {
-      document.title = data.pageName;
-      document.getElementById('page-title').textContent = data.pageName;
-      document.getElementById('page-header').textContent = data.pageName;
+      document.title = data.pageName; // Título dinámico
+      document.getElementById('page-header').textContent = "Localizador"; // Header fijo
       pageNameSet = true;
     }
 
