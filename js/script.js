@@ -10,6 +10,7 @@ let marker = null;
 let polyline = null;
 let routePoints = []; // Array para almacenar solo los puntos nuevos desde que se cargó la página
 let lastProcessedTimestamp = null; // Para controlar qué puntos ya procesamos
+let pageNameSet = false; // Para controlar si ya se estableció el nombre de la página
 
 // Función para obtener y actualizar datos
 async function fetchData() {
@@ -17,8 +18,26 @@ async function fetchData() {
     const response = await fetch("data.php");
     const data = await response.json();
 
-    if (data.length > 0) {
-      const last = data[data.length - 1];
+    // Establecer el nombre de la página solo una vez
+    if (!pageNameSet && data.pageName) {
+      document.title = data.pageName;
+      document.getElementById('page-title').textContent = data.pageName;
+      document.getElementById('page-header').textContent = data.pageName;
+      pageNameSet = true;
+    }
+
+    // Procesar datos de ubicación - puede ser array de puntos o objeto con puntos
+    let locationData = [];
+    if (Array.isArray(data)) {
+      locationData = data;
+    } else if (data.locations && Array.isArray(data.locations)) {
+      locationData = data.locations;
+    } else if (data.lat && data.lng) {
+      locationData = [data]; // Un solo punto
+    }
+
+    if (locationData.length > 0) {
+      const last = locationData[locationData.length - 1];
 
       // Mostrar datos en el recuadro en una sola línea
       document.getElementById("info").innerHTML = `
@@ -84,4 +103,3 @@ setInterval(fetchData, 5000);
 
 // Cargar datos iniciales
 fetchData();
-
