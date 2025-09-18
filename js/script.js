@@ -77,7 +77,7 @@ async function fetchData() {
     }
   } catch (err) {
     console.error("❌ Error cargando datos:", err);
-    
+
     // Mostrar mensaje de error en la interfaz
     document.getElementById("info").innerHTML = `
       <b style="color: red;">Error:</b> No se pudieron cargar los datos.<br>
