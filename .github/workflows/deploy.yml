@@ -1,17 +1,21 @@
-name: Deploy to EC2 with Apache
+name: Deploy to EC2 with Apache (both)
 
 on:
   push:
-    branches:
-      - main   # o la rama que uses
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    strategy:
+      matrix:
+        runner_label: [ "web1", "web2" ]
+      fail-fast: false
+    runs-on: [ self-hosted, ${{ matrix.runner_label }} ]
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v3   # 👈 descarga tu repo
+        uses: actions/checkout@v3
 
       - name: Copiar archivos al servidor Apache
         run: |
