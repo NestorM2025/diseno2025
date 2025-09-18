@@ -8,6 +8,7 @@ $host = $env['DB_HOST'];
 $user = $env['DB_USER'];
 $pass = $env['DB_PASS'];
 $dbname = $env['DB_NAME'];
+$pageName = $env['PAGE_NAME'];
 
 // Conectar a la base de datos
 $conn = new mysqli($host, $user, $pass, $dbname);

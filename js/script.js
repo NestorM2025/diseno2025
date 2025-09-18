@@ -84,3 +84,14 @@ setInterval(fetchData, 5000);
 
 // Cargar datos iniciales
 fetchData();
+
+// Llamar a data.php para traer también el nombre de la página
+fetch('data.php')
+  .then(res => res.json())
+  .then(data => {
+    if (data.pageName) {
+      document.title = data.pageName;
+      document.getElementById('page-header').textContent = data.pageName;
+    }
+  })
+  .catch(err => console.error(err));
