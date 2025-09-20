@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Cargando...</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="css/historico.css">
+</head>
+<body>
+  <header>
+    <h1 id="page-header">Localizador Histórico</h1>
+  </header>
+
+  <main class="container">
+    <div class="controls-card">
+      <div class="date-controls">
+        <div class="input-group">
+          <label for="fecha-inicio">Fecha de Inicio:</label>
+          <input type="datetime-local" id="fecha-inicio" name="fecha-inicio">
+        </div>
+        <div class="input-group">
+          <label for="fecha-fin">Fecha de Fin:</label>
+          <input type="datetime-local" id="fecha-fin" name="fecha-fin">
+        </div>
+        <button id="btn-consultar" class="btn-primary">Consultar Recorrido</button>
+        <button id="btn-limpiar" class="btn-secondary">Limpiar Mapa</button>
+      </div>
+    </div>
+
+    <div id="info" class="info-card">
+      <b>Selecciona un rango de fechas para ver el recorrido histórico</b>
+    </div>
+
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="js/historico.js"></script>
+</body>
+</html>
