@@ -63,7 +63,19 @@ async function consultarRecorrido() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    const data = await response.json();
+    // Obtener el texto crudo primero para debug
+    const responseText = await response.text();
+    console.log('Respuesta cruda del servidor:', responseText);
+    
+    // Intentar parsear como JSON
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (jsonError) {
+      console.error('Error parseando JSON:', jsonError);
+      console.error('Respuesta que causó el error:', responseText);
+      throw new Error(`Respuesta inválida del servidor: ${responseText.substring(0, 200)}...`);
+    }
     
     console.log('Datos recibidos:', data); // Para debug
     
