@@ -176,20 +176,40 @@ h1 {
   font-weight: bold;
 }
 
-/* Botón Histórico */
-.btn-historico {
-  background-color: #4CAF50;
+/* Fuerza que el header sea una barra con título a la izq y botón a la der */
+header.header-bar {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  background: #333;
+  padding: 10px 20px;
+  color: #fff;
+  text-align: initial !important; /* quita centrado heredado */
+}
+
+/* Asegura que el título no se centre */
+header.header-bar h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: left !important;
+}
+
+/* Botón/enlace Histórico */
+header.header-bar .btn-historico {
+  background: #4CAF50;
+  color: #fff;
   text-decoration: none;
-  color: white;
   padding: 8px 16px;
   font-size: 16px;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease;
+  display: inline-block;
 }
 
-.btn-historico:hover {
-  background-color: #45a049;
+header.header-bar .btn-historico:hover {
+  background: #45a049;
 }
 
 
