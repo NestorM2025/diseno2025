@@ -142,6 +142,40 @@ h1 {
   }
 }
 
+/* Contenedor del encabezado con título + botón */
+.header-bar {
+  display: flex;
+  justify-content: space-between; /* título a la izquierda, botón a la derecha */
+  align-items: center;
+  background-color: #333; /* mismo tono del header actual */
+  padding: 10px 20px;
+  color: white;
+}
+
+/* Título */
+.header-bar h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Botón de Histórico */
+.btn-historico {
+  background-color: #4CAF50; /* verde moderno */
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-historico:hover {
+  background-color: #45a049;
+}
+
+
 /* Estilos adicionales para la página histórica */
 /* Añade estos estilos a tu archivo styles.css existente */
 
