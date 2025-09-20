@@ -71,10 +71,15 @@ async function consultarRecorrido() {
     let data;
     try {
       data = JSON.parse(responseText);
+      console.log('Datos parseados correctamente:', data);
     } catch (jsonError) {
       console.error('Error parseando JSON:', jsonError);
       console.error('Respuesta que causó el error:', responseText);
-      throw new Error(`Respuesta inválida del servidor: ${responseText.substring(0, 200)}...`);
+      document.getElementById("info").innerHTML = `
+        <b style="color: red;">Error:</b> Respuesta inválida del servidor.<br>
+        <small>Revisa la consola para más detalles</small>
+      `;
+      return;
     }
     
     console.log('Datos recibidos:', data); // Para debug
