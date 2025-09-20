@@ -11,40 +11,18 @@ body {
   line-height: 1.6;
 }
 
-/* Header barra */
-.header-bar {
-  display: flex;                  /* activa flexbox */
-  justify-content: space-between; /* título a la izquierda, botón a la derecha */
-  align-items: center;            /* centra verticalmente */
-  background-color: #333;
-  padding: 10px 20px;
-  color: white;
+/* Header */
+header {
+  background: #333;
+  color: rgba(185, 174, 174, 0.863);
+  padding: 1rem;
+  text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Título del header */
-.header-bar h1 {
+h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: bold;
-  text-align: left;
-  color: rgba(185, 174, 174, 0.863);
-}
-
-/* Botón/enlace Histórico */
-.btn-historico {
-  background-color: #4CAF50;
-  text-decoration: none;
-  color: white;
-  padding: 8px 16px;
-  font-size: 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.btn-historico:hover {
-  background-color: #45a049;
+  font-size: 1.5rem;
 }
 
 /* Contenedor principal */
@@ -89,19 +67,19 @@ body {
 
 /* Tablets */
 @media (min-width: 768px) {
-  .header-bar h1 {
+  h1 {
     font-size: 1.8rem;
   }
-  
+
   .container {
     padding: 1.5rem;
   }
-  
+
   .info-card {
     padding: 1.5rem;
     font-size: 1.1rem;
   }
-  
+
   #map {
     height: 500px;
   }
@@ -109,21 +87,21 @@ body {
 
 /* Desktop */
 @media (min-width: 1024px) {
-  .header-bar h1 {
+  h1 {
     font-size: 2rem;
   }
-  
+
   .container {
     padding: 2rem;
   }
-  
+
   .info-card {
     padding: 2rem;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
   }
-  
+
   #map {
     height: 600px;
   }
@@ -138,25 +116,25 @@ body {
 
 /* Mejoras para dispositivos móviles pequeños */
 @media (max-width: 480px) {
-  .header-bar {
+  header {
     padding: 0.8rem;
   }
-  
-  .header-bar h1 {
+
+  h1 {
     font-size: 1.2rem;
   }
-  
+
   .container {
     padding: 0.8rem;
   }
-  
+
   .info-card {
     padding: 0.8rem;
     font-size: 0.9rem;
     border-radius: 8px;
     width: 100%;
   }
-  
+
   #map {
     height: 300px;
     border-radius: 8px;
@@ -164,7 +142,158 @@ body {
   }
 }
 
+/* Contenedor del encabezado con título + botón */
+.header-bar {
+  display: flex;
+  justify-content: space-between; /* título a la izquierda, botón a la derecha */
+  align-items: center;
+  background-color: #333; /* mismo tono del header actual */
+  padding: 10px 20px;
+  color: white;
+}
 
+/* Título */
+.header-bar h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Header contenedor */
+.header-bar {
+  display: flex;
+  justify-content: space-between; /* título a la izquierda, botón a la derecha */
+  align-items: center;            /* alineación vertical centrada */
+  background-color: #333;
+  padding: 10px 20px;
+  color: white;
+}
+
+/* Título */
+.header-bar h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Fuerza que el header sea una barra con título a la izq y botón a la der */
+header.header-bar {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  background: #333;
+  padding: 10px 20px;
+  color: #fff;
+  text-align: initial !important; /* quita centrado heredado */
+}
+
+/* Asegura que el título no se centre */
+header.header-bar h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: left !important;
+}
+
+/* Botón/enlace Histórico */
+header.header-bar .btn-historico {
+  background: #4CAF50;
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: inline-block;
+}
+
+header.header-bar .btn-historico:hover {
+  background: #45a049;
+}
+
+/* Estilos adicionales para la página histórica */
+.controls-card {
+  background-color: #f9f9f9;
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.date-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  justify-content: center;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.input-group label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.input-group input {
+  padding: 0.8rem;
+  border: 2px solid #333;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  background-color: white;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.8rem 1.5rem;
+  border: 2px solid #333;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+  border-color: #545b62;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 /* Responsive para controles */
 @media (max-width: 768px) {
@@ -172,12 +301,13 @@ body {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .input-group {
     min-width: 100%;
   }
-  
-  .btn-primary, .btn-secondary {
+
+  .btn-primary,
+  .btn-secondary {
     width: 100%;
     margin-top: 0.5rem;
   }
@@ -187,118 +317,85 @@ body {
   .controls-card {
     padding: 0.8rem;
   }
-  
+
   .input-group label {
     font-size: 0.8rem;
   }
-  
+
   .input-group input {
     padding: 0.6rem;
     font-size: 0.8rem;
   }
 }
 
-/* ====== Histórico: restauración de layout y controles ====== */
-
-/* Centrar y limitar ancho de las tarjetas de controles y mensajes */
-.controls-card,
-.hint-card {
-  max-width: 1120px;           /* mismo ancho visual que el mapa dentro del container */
-  margin-left: auto;
-  margin-right: auto;
+/* Header barra */
+.header-bar {
+  background-color: #333;
+  padding: 10px 20px;
+  color: white;
 }
 
-/* Tarjeta de mensaje/ayuda bajo los controles (si la usas) */
-.hint-card {
-  background-color: #fff;
-  border: 2px solid #333;
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin: 1.25rem auto;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  text-align: center;
-  font-weight: 600;
-}
-
-/* Fila de controles de fecha y botones */
-.date-controls {
+/* Contenedor interno con flex */
+.header-content {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 1.25rem;           /* separación uniforme entre inputs y botones */
-  align-items: end;            /* alinear con la línea de base de los inputs */
-  justify-content: center;     /* centrado horizontal en pantallas medianas */
-  margin: 0.25rem 0;
+  justify-content: space-between; /* título a la izquierda, botón a la derecha */
+  align-items: center;
 }
 
-/* Grupos de input etiqueta + campo */
-.input-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 240px;            /* un poco más ancho para flatpickr */
-  max-width: 360px;
-  flex: 1 1 260px;             /* permite que crezcan y se acomoden */
+/* Título */
+.header-content h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: left; /* forzamos a la izquierda */
 }
 
-.input-group label {
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-}
-
-.input-group input {
-  padding: 0.75rem 0.9rem;
-  border: 2px solid #333;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  background-color: #fff;
-  width: 100%;
-}
-
-.input-group input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-}
-
-/* Botones de acciones */
-.btn-primary,
-.btn-secondary {
-  padding: 0.85rem 1.4rem;
-  border: 2px solid transparent;
-  border-radius: 8px;
-  font-weight: 700;
+/* Botón de Histórico */
+.btn-historico {
+  background-color: #4CAF50;
+  text-decoration: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-  line-height: 1;
+  transition: background-color 0.3s ease;
 }
 
-.btn-primary { background-color: #007bff; color: #fff; border-color: #007bff; }
-.btn-primary:hover { background-color: #0056b3; border-color: #0056b3; }
-
-.btn-secondary { background-color: #6c757d; color: #fff; border-color: #6c757d; }
-.btn-secondary:hover { background-color: #545b62; border-color: #545b62; }
-
-.btn-primary:disabled,
-.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* Separación cuando los botones están junto a los inputs */
-.date-controls .btn-primary,
-.date-controls .btn-secondary { margin-left: 0.25rem; }
-
-/* Mapa centrado con el mismo marco que en la página principal */
-.map-container { max-width: 1120px; margin-left: auto; margin-right: auto; }
-
-/* Responsive */
-@media (max-width: 992px) {
-  .controls-card,
-  .hint-card,
-  .map-container { max-width: 100%; }
-  .date-controls { justify-content: stretch; }
+.btn-historico:hover {
+  background-color: #45a049;
 }
 
-@media (max-width: 768px) {
-  .input-group { min-width: 100%; max-width: 100%; }
-  .date-controls .btn-primary,
-  .date-controls .btn-secondary { width: 100%; margin-left: 0; }
+/* Barra superior */
+.header-bar {
+  display: flex;                /* activa flexbox */
+  justify-content: space-between; /* título izq, botón der */
+  align-items: center;          /* centra verticalmente */
+  background-color: #333;
+  padding: 10px 20px;
+  color: white;
+}
+
+/* Título */
+.header-bar h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: left;
+}
+
+/* Botón/enlace Histórico */
+.btn-historico {
+  background-color: #4CAF50;
+  text-decoration: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-historico:hover {
+  background-color: #45a049;
 }
