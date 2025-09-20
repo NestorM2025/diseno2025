@@ -327,3 +327,41 @@ header.header-bar .btn-historico:hover {
     font-size: 0.8rem;
   }
 }
+
+/* Header barra */
+.header-bar {
+  background-color: #333;
+  padding: 10px 20px;
+  color: white;
+}
+
+/* Contenedor interno con flex */
+.header-content {
+  display: flex;
+  justify-content: space-between; /* título a la izquierda, botón a la derecha */
+  align-items: center;
+}
+
+/* Título */
+.header-content h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: left; /* forzamos a la izquierda */
+}
+
+/* Botón de Histórico */
+.btn-historico {
+  background-color: #4CAF50;
+  text-decoration: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-historico:hover {
+  background-color: #45a049;
+}
