@@ -178,14 +178,20 @@ h1 {
 
 /* Fuerza que el header sea una barra con título a la izq y botón a la der */
 header.header-bar {
-  display: flex !important;
-  justify-content: space-between;
+  display: flex;
+  justify-content: space-between; /* título a la izquierda, botones a la derecha */
   align-items: center;
   background: #333;
   padding: 10px 20px;
   color: #fff;
-  text-align: initial !important; /* quita centrado heredado */
 }
+
+/* Contenedor para los dos botones */
+header.header-bar .buttons {
+  display: flex;
+  gap: 10px; /* separación entre botones */
+}
+
 
 /* Asegura que el título no se centre */
 header.header-bar h1 {
@@ -198,6 +204,19 @@ header.header-bar h1 {
 /* Botón/enlace Histórico */
 header.header-bar .btn-historico {
   background: #4CAF50;
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: inline-block;
+}
+
+/* Botón/enlace Histórico */
+header.header-bar .btn-localizador {
+  background: #4c65af;
   color: #fff;
   text-decoration: none;
   padding: 8px 16px;
