@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Localizador por Radio</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <h1 id="page-header">Localizador por Radio</h1>
+      <button id="btn-inicio" class="btn-home" onclick="window.location.href='index.html'">🏠 Inicio</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="controls-card">
+      <div class="radio-controls">
+        <div class="input-group">
+          <label for="radio-busqueda">Radio de Búsqueda:</label>
+          <select id="radio-busqueda" name="radio-busqueda">
+            <option value="200">200 metros</option>
+            <option value="500" selected>500 metros</option>
+            <option value="1000">1000 metros</option>
+          </select>
+        </div>
+        <button id="btn-limpiar" class="btn-secondary">Limpiar Mapa</button>
+      </div>
+    </div>
+
+    <div id="info" class="info-card">
+      <b>Haz clic en el mapa para colocar un marcador y buscar rutas cercanas</b>
+    </div>
+
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+// Inicializar mapa centrado en Barranquilla
+const map = L.map("map").setView([10.9685, -74.7813], 12);
+
+// Cargar tiles de OpenStreetMap
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap contributors"
+}).addTo(map);
+
+let searchMarker = null;
+let searchCircle = null;
+let polyline = null;
+let markers = [];
+let pageNameSet = false;
+
+// Función para limpiar el mapa
+function limpiarMapa() {
+  if (searchMarker) {
+    map.removeLayer(searchMarker);
+    searchMarker = null;
+  }
+  
+  if (searchCircle) {
+    map.removeLayer(searchCircle);
+    searchCircle = null;
+  }
+  
+  if (polyline) {
+    map.removeLayer(polyline);
+    polyline = null;
+  }
+  
+  markers.forEach(marker => {
+    map.removeLayer(marker);
+  });
+  markers = [];
+  
+  document.getElementById("info").innerHTML = `
+    <b>Haz clic en el mapa para colocar un marcador y buscar rutas cercanas</b>
+  `;
+}
+
+// Función para consultar ubicaciones cercanas
+async function consultarUbicacionesCercanas(lat, lng, radio) {
+  document.getElementById("info").innerHTML = `
+    <b>Buscando ubicaciones dentro de ${radio}m del punto seleccionado...</b>
+  `;
+  
+  try {
+    const url = `localizador.php?lat=${lat}&lng=${lng}&radio=${radio}`;
+    console.log('Consultando URL:', url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const responseText = await response.text();
+    console.log('Respuesta cruda del servidor:', responseText);
+    
+    let data;
+    try {
+      data = JSON.parse(responseText);
+      console.log('Datos parseados correctamente:', data);
+    } catch (jsonError) {
+      console.error('Error parseando JSON:', jsonError);
+      console.error('Respuesta que causó el error:', responseText);
+      document.getElementById("info").innerHTML = `
+        <b style="color: red;">Error:</b> Respuesta inválida del servidor.<br>
+        <small>Revisa la consola para más detalles</small>
+      `;
+      return;
+    }
+    
+    if (data.error) {
+      document.getElementById("info").innerHTML = `
+        <b style="color: red;">Error:</b> ${data.error}<br>
+        <small>${data.message || 'Revisa la configuración del servidor'}</small>
+      `;
+      return;
+    }
+    
+    if (!pageNameSet && data.pageName) {
+      document.title = data.pageName;
+      pageNameSet = true;
+    }
+    
+    let locationData = [];
+    if (Array.isArray(data)) {
+      locationData = data;
+    } else if (data.locations && Array.isArray(data.locations)) {
+      locationData = data.locations;
+    } else if (data.data && Array.isArray(data.data)) {
+      locationData = data.data;
+    }
+    
+    console.log(`Procesando ${locationData.length} puntos`);
+    
+    if (locationData.length > 0) {
+      const puntosValidos = locationData.filter(point => 
+        point.lat && point.lng && 
+        !isNaN(parseFloat(point.lat)) && 
+        !isNaN(parseFloat(point.lng))
+      );
+      
+      if (puntosValidos.length === 0) {
+        document.getElementById("info").innerHTML = `
+          <b>No se encontraron ubicaciones válidas dentro del radio de ${radio}m.</b>
+        `;
+        return;
+      }
+      
+      // Crear array de puntos para la polyline
+      const routePoints = puntosValidos.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+      
+      // Crear polyline
+      if (routePoints.length > 1) {
+        polyline = L.polyline(routePoints, {
+          color: 'blue',
+          weight: 3,
+          opacity: 0.7,
+          smoothFactor: 1
+        }).addTo(map);
+      }
+      
+      // Añadir marcador de inicio (verde)
+      const startPoint = puntosValidos[0];
+      const startMarker = L.marker([startPoint.lat, startPoint.lng], {
+        icon: L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        })
+      }).addTo(map);
+      
+      startMarker.bindPopup(`<b>Inicio:</b><br>${startPoint.timestamp}<br><b>Lat:</b> ${startPoint.lat}<br><b>Lon:</b> ${startPoint.lng}`);
+      markers.push(startMarker);
+      
+      // Añadir marcador de fin (rojo) si hay más de un punto
+      if (puntosValidos.length > 1) {
+        const endPoint = puntosValidos[puntosValidos.length - 1];
+        const endMarker = L.marker([endPoint.lat, endPoint.lng], {
+          icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+          })
+        }).addTo(map);
+        
+        endMarker.bindPopup(`<b>Fin:</b><br>${endPoint.timestamp}<br><b>Lat:</b> ${endPoint.lat}<br><b>Lon:</b> ${endPoint.lng}`);
+        markers.push(endMarker);
+      }
+      
+      // Mostrar información
+      const inicio = formatearFechaLegible(startPoint.timestamp);
+      const fin = puntosValidos.length > 1 ? formatearFechaLegible(puntosValidos[puntosValidos.length - 1].timestamp) : inicio;
+      
+      document.getElementById("info").innerHTML = `
+        <b>Ruta encontrada:</b> ${puntosValidos.length} punto${puntosValidos.length > 1 ? 's' : ''} dentro de ${radio}m | 
+        <b>Inicio:</b> ${inicio} ${puntosValidos.length > 1 ? `| <b>Fin:</b> ${fin}` : ''}
+      `;
+      
+      // Ajustar vista del mapa
+      const bounds = L.latLngBounds(routePoints);
+      bounds.extend([lat, lng]); // Incluir el punto de búsqueda
+      map.fitBounds(bounds, { padding: [50, 50] });
+      
+    } else {
+      document.getElementById("info").innerHTML = `
+        <b>No se encontraron ubicaciones dentro del radio de ${radio}m del punto seleccionado.</b>
+      `;
+    }
+    
+  } catch (err) {
+    console.error("❌ Error consultando ubicaciones cercanas:", err);
+    document.getElementById("info").innerHTML = `
+      <b style="color: red;">Error:</b> No se pudieron cargar los datos.<br>
+      <small>Error: ${err.message}</small>
+    `;
+  }
+}
+
+// Manejar clic en el mapa
+map.on('click', function(e) {
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+  const radio = parseInt(document.getElementById('radio-busqueda').value);
+  
+  // Limpiar marcadores anteriores (excepto el de búsqueda y círculo)
+  if (polyline) {
+    map.removeLayer(polyline);
+    polyline = null;
+  }
+  markers.forEach(marker => {
+    map.removeLayer(marker);
+  });
+  markers = [];
+  
+  // Eliminar marcador y círculo anteriores
+  if (searchMarker) {
+    map.removeLayer(searchMarker);
+  }
+  if (searchCircle) {
+    map.removeLayer(searchCircle);
+  }
+  
+  // Crear nuevo marcador de búsqueda (amarillo)
+  searchMarker = L.marker([lat, lng], {
+    icon: L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    })
+  }).addTo(map);
+  
+  searchMarker.bindPopup(`<b>Punto de búsqueda</b><br>Radio: ${radio}m<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`).openPopup();
+  
+  // Crear círculo del radio de búsqueda
+  searchCircle = L.circle([lat, lng], {
+    radius: radio,
+    color: 'orange',
+    fillColor: '#ffa500',
+    fillOpacity: 0.2,
+    weight: 2
+  }).addTo(map);
+  
+  // Consultar ubicaciones cercanas
+  consultarUbicacionesCercanas(lat, lng, radio);
+});
+
+// Actualizar radio cuando cambia el select
+document.getElementById('radio-busqueda').addEventListener('change', function() {
+  if (searchMarker && searchCircle) {
+    const radio = parseInt(this.value);
+    const lat = searchMarker.getLatLng().lat;
+    const lng = searchMarker.getLatLng().lng;
+    
+    // Actualizar círculo
+    map.removeLayer(searchCircle);
+    searchCircle = L.circle([lat, lng], {
+      radius: radio,
+      color: 'orange',
+      fillColor: '#ffa500',
+      fillOpacity: 0.2,
+      weight: 2
+    }).addTo(map);
+    
+    // Actualizar popup del marcador
+    searchMarker.setPopupContent(`<b>Punto de búsqueda</b><br>Radio: ${radio}m<br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`);
+    
+    // Consultar nuevamente con el nuevo radio
+    consultarUbicacionesCercanas(lat, lng, radio);
+  }
+});
+
+// Botón limpiar
+document.getElementById('btn-limpiar').addEventListener('click', limpiarMapa);
+
+// Función para ajustar el mapa cuando cambia el tamaño de ventana
+function handleResize() {
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 100);
+}
+
+// Función para formatear fecha de manera legible
+function formatearFechaLegible(fechaString) {
+  try {
+    const fecha = new Date(fechaString);
+    if (isNaN(fecha.getTime())) return fechaString;
+    
+    const opciones = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+    return fecha.toLocaleDateString('es-ES', opciones);
+  } catch {
+    return fechaString;
+  }
+}
+
+// Event listeners
+window.addEventListener('resize', handleResize);
+  </script>
+
+  <style>
+    /* Estilos adicionales para el header y botón de inicio */
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      background-color: #333;
+      border-bottom: 2px solid #333;
+    }
+
+    .btn-home {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-home:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-home:active {
+      transform: translateY(1px);
+    }
+
+    /* Controles de radio */
+    .radio-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 200px;
+    }
+
+    .input-group label {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .input-group select {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      height: fit-content;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .radio-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .input-group {
+        min-width: 100%;
+      }
+
+      .btn-secondary {
+        width: 100%;
+      }
+    }
+
+    /* Estilo para el cursor del mapa */
+    #map {
+      cursor: crosshair;
+    }
+  </style>
+</body>
+</html>
