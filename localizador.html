@@ -6,6 +6,7 @@
   <title id="page-title">Localizador por Radio</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/localizador-styles.css">
 </head>
 <body>
   <header>
@@ -32,6 +33,21 @@
       <div id="info" class="info-section">
         <b>Haz clic en el mapa para colocar un marcador y buscar rutas cercanas</b>
       </div>
+
+      <!-- Slider de rutas -->
+      <div id="route-slider-container" class="route-slider-container" style="display: none;">
+        <div class="slider-header">
+          <button id="btn-prev-route" class="slider-btn">◀ Anterior</button>
+          <div class="slider-info">
+            <span id="route-counter">Ruta 1 de 1</span>
+          </div>
+          <button id="btn-next-route" class="slider-btn">Siguiente ▶</button>
+        </div>
+        <div class="route-details" id="route-details">
+          <!-- Detalles de la ruta actual -->
+        </div>
+        <button id="btn-show-all" class="btn-show-all">Mostrar Todas las Rutas</button>
+      </div>
     </div>
 
     <div class="map-container">
@@ -54,6 +70,11 @@ let searchCircle = null;
 let polylines = []; // Array de polylines para múltiples rutas
 let markers = [];
 let pageNameSet = false;
+
+// Variables para gestión de rutas
+let rutasData = []; // Almacena todas las rutas
+let rutaActual = 0; // Índice de la ruta actual mostrada
+let mostrandoTodas = false; // Flag para saber si se muestran todas las rutas
 
 // Colores para diferentes rutas
 const routeColors = [
@@ -87,6 +108,14 @@ function limpiarMapa() {
   });
   markers = [];
   
+  // Limpiar datos de rutas
+  rutasData = [];
+  rutaActual = 0;
+  mostrandoTodas = false;
+  
+  // Ocultar slider
+  document.getElementById('route-slider-container').style.display = 'none';
+  
   // Restablecer mensaje inicial
   document.getElementById("info").innerHTML = `
     <b>Haz clic en el mapa para colocar un marcador y buscar rutas cercanas</b>
@@ -106,6 +135,14 @@ function limpiarRutas() {
     map.removeLayer(marker);
   });
   markers = [];
+  
+  // Limpiar datos de rutas
+  rutasData = [];
+  rutaActual = 0;
+  mostrandoTodas = false;
+  
+  // Ocultar slider
+  document.getElementById('route-slider-container').style.display = 'none';
 }
 
 // Función para dividir puntos en rutas por intervalo de tiempo
@@ -136,6 +173,220 @@ function dividirRutasPorTiempo(puntos, minutos = 30) {
   }
   
   return rutas;
+}
+
+// Función para mostrar una ruta específica en el mapa
+function mostrarRuta(indice) {
+  if (indice < 0 || indice >= rutasData.length) return;
+  
+  // Limpiar polylines y marcadores anteriores
+  polylines.forEach(polyline => map.removeLayer(polyline));
+  polylines = [];
+  markers.forEach(marker => map.removeLayer(marker));
+  markers = [];
+  
+  mostrandoTodas = false;
+  rutaActual = indice;
+  
+  const ruta = rutasData[indice];
+  const color = routeColors[indice % routeColors.length];
+  
+  // Crear array de puntos para la polyline
+  const routePoints = ruta.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+  
+  // Crear polyline si hay más de un punto
+  if (routePoints.length > 1) {
+    const polyline = L.polyline(routePoints, {
+      color: color,
+      weight: 4,
+      opacity: 0.8,
+      smoothFactor: 1
+    }).addTo(map);
+    polylines.push(polyline);
+  }
+  
+  // Añadir marcador de inicio (verde)
+  const startPoint = ruta[0];
+  const startMarker = L.marker([startPoint.lat, startPoint.lng], {
+    icon: L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    })
+  }).addTo(map);
+  
+  startMarker.bindPopup(`
+    <b>Ruta ${indice + 1} - Inicio:</b><br>
+    ${formatearFechaLegible(startPoint.timestamp)}<br>
+    <b>Lat:</b> ${startPoint.lat}<br>
+    <b>Lon:</b> ${startPoint.lng}<br>
+    <b>Distancia:</b> ${startPoint.distancia || 'N/A'}m
+  `);
+  markers.push(startMarker);
+  
+  // Añadir marcador de fin (rojo) si hay más de un punto en la ruta
+  if (ruta.length > 1) {
+    const endPoint = ruta[ruta.length - 1];
+    const endMarker = L.marker([endPoint.lat, endPoint.lng], {
+      icon: L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).addTo(map);
+    
+    endMarker.bindPopup(`
+      <b>Ruta ${indice + 1} - Fin:</b><br>
+      ${formatearFechaLegible(endPoint.timestamp)}<br>
+      <b>Lat:</b> ${endPoint.lat}<br>
+      <b>Lon:</b> ${endPoint.lng}<br>
+      <b>Distancia:</b> ${endPoint.distancia || 'N/A'}m
+    `);
+    markers.push(endMarker);
+  }
+  
+  // Actualizar información de la ruta
+  const inicio = formatearFechaLegible(ruta[0].timestamp);
+  const fin = ruta.length > 1 ? formatearFechaLegible(ruta[ruta.length - 1].timestamp) : inicio;
+  
+  document.getElementById('route-counter').textContent = `Ruta ${indice + 1} de ${rutasData.length}`;
+  document.getElementById('route-details').innerHTML = `
+    <div style="border-left: 4px solid ${color}; padding-left: 10px;">
+      <b style="color: ${color}; font-size: 1.1em;">Ruta ${indice + 1}</b><br>
+      <b>📍 Puntos:</b> ${ruta.length}<br>
+      <b>🕐 Inicio:</b> ${inicio}<br>
+      ${ruta.length > 1 ? `<b>🏁 Fin:</b> ${fin}` : ''}
+    </div>
+  `;
+  
+  // Ajustar vista del mapa para mostrar la ruta completa
+  const allPoints = routePoints.slice();
+  if (searchMarker) {
+    const searchLatLng = searchMarker.getLatLng();
+    allPoints.push([searchLatLng.lat, searchLatLng.lng]);
+  }
+  const bounds = L.latLngBounds(allPoints);
+  map.fitBounds(bounds, { padding: [50, 50] });
+  
+  // Actualizar estado de botones
+  document.getElementById('btn-prev-route').disabled = (indice === 0);
+  document.getElementById('btn-next-route').disabled = (indice === rutasData.length - 1);
+  
+  // Actualizar texto del botón "Mostrar Todas"
+  document.getElementById('btn-show-all').textContent = 'Mostrar Todas las Rutas';
+}
+
+// Función para mostrar todas las rutas
+function mostrarTodasLasRutas() {
+  // Limpiar polylines y marcadores anteriores
+  polylines.forEach(polyline => map.removeLayer(polyline));
+  polylines = [];
+  markers.forEach(marker => map.removeLayer(marker));
+  markers = [];
+  
+  mostrandoTodas = true;
+  
+  let allPoints = [];
+  
+  // Crear polylines y marcadores para cada ruta
+  rutasData.forEach((ruta, index) => {
+    if (ruta.length === 0) return;
+    
+    const color = routeColors[index % routeColors.length];
+    
+    // Crear array de puntos para la polyline
+    const routePoints = ruta.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+    allPoints.push(...routePoints);
+    
+    // Crear polyline si hay más de un punto
+    if (routePoints.length > 1) {
+      const polyline = L.polyline(routePoints, {
+        color: color,
+        weight: 3,
+        opacity: 0.7,
+        smoothFactor: 1
+      }).addTo(map);
+      polylines.push(polyline);
+    }
+    
+    // Añadir marcador de inicio (verde)
+    const startPoint = ruta[0];
+    const startMarker = L.marker([startPoint.lat, startPoint.lng], {
+      icon: L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).addTo(map);
+    
+    startMarker.bindPopup(`
+      <b>Ruta ${index + 1} - Inicio:</b><br>
+      ${formatearFechaLegible(startPoint.timestamp)}<br>
+      <b>Lat:</b> ${startPoint.lat}<br>
+      <b>Lon:</b> ${startPoint.lng}<br>
+      <b>Distancia:</b> ${startPoint.distancia || 'N/A'}m
+    `);
+    markers.push(startMarker);
+    
+    // Añadir marcador de fin (rojo) si hay más de un punto en la ruta
+    if (ruta.length > 1) {
+      const endPoint = ruta[ruta.length - 1];
+      const endMarker = L.marker([endPoint.lat, endPoint.lng], {
+        icon: L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41],
+          popupAnchor: [1, -34],
+          shadowSize: [41, 41]
+        })
+      }).addTo(map);
+      
+      endMarker.bindPopup(`
+        <b>Ruta ${index + 1} - Fin:</b><br>
+        ${formatearFechaLegible(endPoint.timestamp)}<br>
+        <b>Lat:</b> ${endPoint.lat}<br>
+        <b>Lon:</b> ${endPoint.lng}<br>
+        <b>Distancia:</b> ${endPoint.distancia || 'N/A'}m
+      `);
+      markers.push(endMarker);
+    }
+  });
+  
+  // Actualizar información
+  document.getElementById('route-counter').textContent = `Mostrando todas las rutas (${rutasData.length})`;
+  
+  let detailsHTML = '<div><b style="font-size: 1.1em;">Todas las Rutas:</b><br>';
+  rutasData.forEach((ruta, index) => {
+    const color = routeColors[index % routeColors.length];
+    const inicio = formatearFechaLegible(ruta[0].timestamp);
+    detailsHTML += `<div style="margin-top: 8px; border-left: 4px solid ${color}; padding-left: 10px;">`;
+    detailsHTML += `<b style="color: ${color}">Ruta ${index + 1}:</b> ${ruta.length} punto${ruta.length > 1 ? 's' : ''} | ${inicio}`;
+    detailsHTML += `</div>`;
+  });
+  detailsHTML += '</div>';
+  
+  document.getElementById('route-details').innerHTML = detailsHTML;
+  
+  // Ajustar vista del mapa
+  if (searchMarker) {
+    const searchLatLng = searchMarker.getLatLng();
+    allPoints.push([searchLatLng.lat, searchLatLng.lng]);
+  }
+  const bounds = L.latLngBounds(allPoints);
+  map.fitBounds(bounds, { padding: [50, 50] });
+  
+  // Actualizar texto del botón
+  document.getElementById('btn-show-all').textContent = 'Volver a Vista Individual';
 }
 
 // Función para consultar ubicaciones cercanas
@@ -210,105 +461,29 @@ async function consultarUbicacionesCercanas(lat, lng, radio) {
       }
       
       // Dividir puntos en rutas según intervalo de 30 minutos
-      const rutas = dividirRutasPorTiempo(puntosValidos, 30);
-      console.log(`Se encontraron ${rutas.length} ruta(s) separada(s)`);
+      rutasData = dividirRutasPorTiempo(puntosValidos, 30);
+      console.log(`Se encontraron ${rutasData.length} ruta(s) separada(s)`);
       
-      let totalPuntos = 0;
-      let infoHTML = `<b>🎯 Punto de búsqueda:</b> Radio ${radio}m<br>`;
+      let totalPuntos = rutasData.reduce((sum, ruta) => sum + ruta.length, 0);
       
-      // Crear polylines y marcadores para cada ruta
-      rutas.forEach((ruta, index) => {
-        if (ruta.length === 0) return;
-        
-        totalPuntos += ruta.length;
-        const color = routeColors[index % routeColors.length];
-        
-        // Crear array de puntos para la polyline
-        const routePoints = ruta.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
-        
-        // Crear polyline si hay más de un punto
-        if (routePoints.length > 1) {
-          const polyline = L.polyline(routePoints, {
-            color: color,
-            weight: 3,
-            opacity: 0.7,
-            smoothFactor: 1
-          }).addTo(map);
-          polylines.push(polyline);
-        }
-        
-        // Añadir marcador de inicio (verde)
-        const startPoint = ruta[0];
-        const startMarker = L.marker([startPoint.lat, startPoint.lng], {
-          icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-          })
-        }).addTo(map);
-        
-        startMarker.bindPopup(`
-          <b>Ruta ${index + 1} - Inicio:</b><br>
-          ${formatearFechaLegible(startPoint.timestamp)}<br>
-          <b>Lat:</b> ${startPoint.lat}<br>
-          <b>Lon:</b> ${startPoint.lng}<br>
-          <b>Distancia:</b> ${startPoint.distancia || 'N/A'}m
-        `);
-        markers.push(startMarker);
-        
-        // Añadir marcador de fin (rojo) si hay más de un punto en la ruta
-        if (ruta.length > 1) {
-          const endPoint = ruta[ruta.length - 1];
-          const endMarker = L.marker([endPoint.lat, endPoint.lng], {
-            icon: L.icon({
-              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-              iconSize: [25, 41],
-              iconAnchor: [12, 41],
-              popupAnchor: [1, -34],
-              shadowSize: [41, 41]
-            })
-          }).addTo(map);
-          
-          endMarker.bindPopup(`
-            <b>Ruta ${index + 1} - Fin:</b><br>
-            ${formatearFechaLegible(endPoint.timestamp)}<br>
-            <b>Lat:</b> ${endPoint.lat}<br>
-            <b>Lon:</b> ${endPoint.lng}<br>
-            <b>Distancia:</b> ${endPoint.distancia || 'N/A'}m
-          `);
-          markers.push(endMarker);
-        }
-        
-        // Agregar información de la ruta
-        const inicio = formatearFechaLegible(ruta[0].timestamp);
-        const fin = ruta.length > 1 ? formatearFechaLegible(ruta[ruta.length - 1].timestamp) : inicio;
-        
-        infoHTML += `<br><b style="color: ${color}">Ruta ${index + 1}:</b> ${ruta.length} punto${ruta.length > 1 ? 's' : ''} | `;
-        infoHTML += `<b>Inicio:</b> ${inicio}`;
-        if (ruta.length > 1) {
-          infoHTML += ` | <b>Fin:</b> ${fin}`;
-        }
-      });
+      // Mostrar información general
+      document.getElementById("info").innerHTML = `
+        <b>📊 Resultados:</b> ${totalPuntos} punto${totalPuntos > 1 ? 's' : ''} encontrado${totalPuntos > 1 ? 's' : ''} en ${rutasData.length} ruta${rutasData.length > 1 ? 's' : ''}<br>
+        <b>🎯 Radio de búsqueda:</b> ${radio}m
+      `;
       
-      // Mostrar resumen total
-      infoHTML = `<b>📊 Total:</b> ${totalPuntos} punto${totalPuntos > 1 ? 's' : ''} encontrado${totalPuntos > 1 ? 's' : ''} en ${rutas.length} ruta${rutas.length > 1 ? 's' : ''}<br>` + infoHTML;
+      // Mostrar slider de rutas
+      document.getElementById('route-slider-container').style.display = 'block';
       
-      document.getElementById("info").innerHTML = infoHTML;
-      
-      // Ajustar vista del mapa para incluir todas las rutas y el punto de búsqueda
-      const allPoints = puntosValidos.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
-      allPoints.push([lat, lng]); // Incluir el punto de búsqueda
-      const bounds = L.latLngBounds(allPoints);
-      map.fitBounds(bounds, { padding: [50, 50] });
+      // Mostrar la primera ruta
+      rutaActual = 0;
+      mostrarRuta(0);
       
     } else {
       document.getElementById("info").innerHTML = `
         <b>No se encontraron ubicaciones dentro del radio de ${radio}m del punto seleccionado.</b>
       `;
+      document.getElementById('route-slider-container').style.display = 'none';
     }
     
   } catch (err) {
@@ -392,9 +567,43 @@ document.getElementById('radio-busqueda').addEventListener('change', function() 
   }
 });
 
-// Botón limpiar - ahora funciona correctamente
+// Botones del slider
+document.getElementById('btn-prev-route').addEventListener('click', function() {
+  if (rutaActual > 0) {
+    mostrarRuta(rutaActual - 1);
+  }
+});
+
+document.getElementById('btn-next-route').addEventListener('click', function() {
+  if (rutaActual < rutasData.length - 1) {
+    mostrarRuta(rutaActual + 1);
+  }
+});
+
+document.getElementById('btn-show-all').addEventListener('click', function() {
+  if (mostrandoTodas) {
+    // Si ya está mostrando todas, volver a la ruta actual
+    mostrarRuta(rutaActual);
+  } else {
+    // Mostrar todas las rutas
+    mostrarTodasLasRutas();
+  }
+});
+
+// Botón limpiar
 document.getElementById('btn-limpiar').addEventListener('click', function() {
   limpiarMapa();
+});
+
+// Navegación con teclado (flechas izquierda/derecha)
+document.addEventListener('keydown', function(e) {
+  if (rutasData.length === 0) return;
+  
+  if (e.key === 'ArrowLeft' && rutaActual > 0 && !mostrandoTodas) {
+    mostrarRuta(rutaActual - 1);
+  } else if (e.key === 'ArrowRight' && rutaActual < rutasData.length - 1 && !mostrandoTodas) {
+    mostrarRuta(rutaActual + 1);
+  }
 });
 
 // Función para ajustar el mapa cuando cambia el tamaño de ventana
@@ -426,118 +635,5 @@ function formatearFechaLegible(fechaString) {
 // Event listeners
 window.addEventListener('resize', handleResize);
   </script>
-
-  <style>
-    /* Estilos adicionales para el header y botón de inicio */
-    .header-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.75rem 1.5rem;
-      background-color: #333;
-      border-bottom: 2px solid #333;
-    }
-
-    .btn-home {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background-color 0.3s ease;
-    }
-
-    .btn-home:hover {
-      background-color: #0056b3;
-    }
-
-    .btn-home:active {
-      transform: translateY(1px);
-    }
-
-    /* Controles de radio */
-    .radio-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      align-items: end;
-      margin-bottom: 1rem;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      min-width: 200px;
-    }
-
-    .input-group label {
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-      color: #333;
-    }
-
-    .input-group select {
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .btn-secondary {
-      background-color: #6c757d;
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      height: fit-content;
-    }
-
-    .btn-secondary:hover {
-      background-color: #5a6268;
-    }
-
-    /* Sección de información integrada */
-    .info-section {
-      padding: 1rem;
-      background-color: #f8f9fa;
-      border-radius: 4px;
-      border-left: 4px solid #007bff;
-      line-height: 1.6;
-    }
-
-    /* Responsive design */
-    @media (max-width: 768px) {
-      .header-container {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-      }
-
-      .radio-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .input-group {
-        min-width: 100%;
-      }
-
-      .btn-secondary {
-        width: 100%;
-      }
-    }
-
-    /* Estilo para el cursor del mapa */
-    #map {
-      cursor: crosshair;
-    }
-  </style>
 </body>
 </html>
