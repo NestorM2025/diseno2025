@@ -20,27 +20,31 @@ async function fetchData() {
 
     // Establecer el nombre de la página solo una vez
     if (!pageNameSet && data.pageName) {
-      document.title = data.pageName; // Título dinámico
-      document.getElementById('page-header').textContent = "Localizador"; // Header fijo
+      document.title = data.pageName;
+      document.getElementById('page-header').textContent = "Localizador";
       pageNameSet = true;
     }
 
-    // Procesar datos de ubicación - puede ser array de puntos o objeto con puntos
+    // Procesar datos de ubicación
     let locationData = [];
     if (Array.isArray(data)) {
       locationData = data;
     } else if (data.locations && Array.isArray(data.locations)) {
       locationData = data.locations;
     } else if (data.lat && data.lng) {
-      locationData = [data]; // Un solo punto
+      locationData = [data];
     }
 
     if (locationData.length > 0) {
       const last = locationData[locationData.length - 1];
 
-      // Mostrar datos en el recuadro en una sola línea
+      // Mostrar datos en el recuadro incluyendo RPM
+      const rpm = last.rpm !== undefined ? last.rpm : 'N/A';
       document.getElementById("info").innerHTML = `
-        <b>Fecha/Hora:</b> ${last.timestamp} | <b>Lat:</b> ${last.lat} | <b>Lon:</b> ${last.lng}
+        <b>Fecha/Hora:</b> ${last.timestamp} | 
+        <b>Lat:</b> ${last.lat} | 
+        <b>Lon:</b> ${last.lng} | 
+        <b>RPM:</b> ${rpm}
       `;
 
       // Solo añadir punto nuevo si es diferente al último procesado
@@ -57,7 +61,7 @@ async function fetchData() {
         marker = L.marker([last.lat, last.lng]).addTo(map);
       }
 
-      // Crear o actualizar polyline solo con los puntos nuevos acumulados
+      // Crear o actualizar polyline
       if (routePoints.length > 1) {
         if (polyline) {
           polyline.setLatLngs(routePoints);
@@ -71,14 +75,12 @@ async function fetchData() {
         }
       }
 
-      // Centrar el mapa en la nueva posición respetando el zoom actual del usuario
+      // Centrar el mapa
       const currentZoom = map.getZoom();
       map.setView([last.lat, last.lng], currentZoom);
     }
   } catch (err) {
     console.error("❌ Error cargando datos:", err);
-
-    // Mostrar mensaje de error en la interfaz
     document.getElementById("info").innerHTML = `
       <b style="color: red;">Error:</b> No se pudieron cargar los datos.<br>
       <small>Revisa la conexión o el archivo data.php</small>
