@@ -55,13 +55,14 @@ while True:
         lon = float(data_json["Longitud"])
         fecha = data_json["Fecha"]   # formato: YYYY-MM-DD
         hora = data_json["Hora"]     # formato: HH:MM:SS
+        rpm = int(data_json.get("RPM", 0))  # Obtener RPM, default 0 si no existe
 
         # Insertar en la base
-        sql = "INSERT INTO locations2 (lat, lon, fecha, hora) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (lat, lon, fecha, hora))
+        sql = "INSERT INTO locations2 (lat, lon, fecha, hora, rpm) VALUES (%s, %s, %s, %s, %s)"
+        cursor.execute(sql, (lat, lon, fecha, hora, rpm))
         db.commit()
 
-        print(f"✅ Guardado en DB -> lat:{lat}, lon:{lon}, fecha:{fecha}, hora:{hora}")
+        print(f"✅ Guardado en DB -> lat:{lat}, lon:{lon}, fecha:{fecha}, hora:{hora}, rpm:{rpm}")
 
     except json.JSONDecodeError:
         print("❌ Error: No se pudo decodificar el JSON")

@@ -22,8 +22,8 @@ if ($conn->connect_error) {
     exit;
 }
 
-// Consultar los últimos 50 registros
-$sql = "SELECT lat, lon, CONCAT(fecha, ' ', hora) AS timestamp FROM locations2 ORDER BY id ASC";
+// Consultar los últimos registros incluyendo RPM
+$sql = "SELECT lat, lon, rpm, CONCAT(fecha, ' ', hora) AS timestamp FROM locations2 ORDER BY id ASC";
 $result = $conn->query($sql);
 
 $data = [];
@@ -32,6 +32,7 @@ if ($result->num_rows > 0) {
         $data[] = [
             "lat" => floatval($row["lat"]),
             "lng" => floatval($row["lon"]),
+            "rpm" => intval($row["rpm"]),
             "timestamp" => $row["timestamp"]
         ];
     }
