@@ -84,11 +84,12 @@ try {
         exit;
     }
 
-    // Fórmula de Haversine para calcular distancia en MySQL
+    // Fórmula de Haversine para calcular distancia en MySQL incluyendo RPM
     // Radio de la Tierra en metros: 6371000
     $sql = "SELECT 
                 lat, 
-                lon, 
+                lon,
+                rpm,
                 CONCAT(fecha, ' ', hora) AS timestamp,
                 id,
                 (6371000 * acos(
@@ -125,6 +126,7 @@ try {
                 $data[] = [
                     "lat"       => (float)$row["lat"],
                     "lng"       => (float)$row["lon"],
+                    "rpm"       => (int)$row["rpm"],
                     "timestamp" => $row["timestamp"],
                     "distancia" => round((float)$row["distancia"], 2) // Distancia en metros
                 ];
