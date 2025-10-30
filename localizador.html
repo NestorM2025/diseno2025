@@ -223,6 +223,7 @@ function mostrarRuta(indice) {
     ${formatearFechaLegible(startPoint.timestamp)}<br>
     <b>Lat:</b> ${startPoint.lat}<br>
     <b>Lon:</b> ${startPoint.lng}<br>
+    <b>RPM:</b> ${startPoint.rpm || 'N/A'}<br>
     <b>Distancia:</b> ${startPoint.distancia || 'N/A'}m
   `);
   markers.push(startMarker);
@@ -246,6 +247,7 @@ function mostrarRuta(indice) {
       ${formatearFechaLegible(endPoint.timestamp)}<br>
       <b>Lat:</b> ${endPoint.lat}<br>
       <b>Lon:</b> ${endPoint.lng}<br>
+      <b>RPM:</b> ${startPoint.rpm || 'N/A'}<br>
       <b>Distancia:</b> ${endPoint.distancia || 'N/A'}m
     `);
     markers.push(endMarker);
@@ -333,6 +335,7 @@ function mostrarTodasLasRutas() {
       ${formatearFechaLegible(startPoint.timestamp)}<br>
       <b>Lat:</b> ${startPoint.lat}<br>
       <b>Lon:</b> ${startPoint.lng}<br>
+      <b>RPM:</b> ${startPoint.rpm || 'N/A'}<br>
       <b>Distancia:</b> ${startPoint.distancia || 'N/A'}m
     `);
     markers.push(startMarker);
@@ -356,6 +359,7 @@ function mostrarTodasLasRutas() {
         ${formatearFechaLegible(endPoint.timestamp)}<br>
         <b>Lat:</b> ${endPoint.lat}<br>
         <b>Lon:</b> ${endPoint.lng}<br>
+        <b>RPM:</b> ${startPoint.rpm || 'N/A'}<br>
         <b>Distancia:</b> ${endPoint.distancia || 'N/A'}m
       `);
       markers.push(endMarker);
