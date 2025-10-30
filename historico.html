@@ -201,10 +201,10 @@ async function consultarRecorrido() {
           shadowSize: [41, 41]
         })
       }).addTo(map);
-      
-      startMarker.bindPopup(`<b>Inicio:</b><br>${startPoint.timestamp}<br><b>Lat:</b> ${startPoint.lat}<br><b>Lon:</b> ${startPoint.lng}`);
+
+      startMarker.bindPopup(`<b>Inicio:</b><br>${startPoint.timestamp}<br><b>Lat:</b> ${startPoint.lat}<br><b>Lon:</b> ${startPoint.lng}<br><b>RPM:</b> ${startPoint.rpm || 'N/A'}`);
       markers.push(startMarker);
-      
+
       // Solo añadir marcador de fin si hay más de un punto
       if (puntosValidos.length > 1) {
         const endPoint = puntosValidos[puntosValidos.length - 1];
@@ -219,7 +219,7 @@ async function consultarRecorrido() {
           })
         }).addTo(map);
         
-        endMarker.bindPopup(`<b>Fin:</b><br>${endPoint.timestamp}<br><b>Lat:</b> ${endPoint.lat}<br><b>Lon:</b> ${endPoint.lng}`);
+        endMarker.bindPopup(`<b>Fin:</b><br>${endPoint.timestamp}<br><b>Lat:</b> ${endPoint.lat}<br><b>Lon:</b> ${endPoint.lng}<br><b>RPM:</b> ${endPoint.rpm || 'N/A'}`);
         markers.push(endMarker);
       }
       
