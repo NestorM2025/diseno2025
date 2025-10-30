@@ -69,8 +69,8 @@ try {
     $fechaInicioFormatted = date('Y-m-d H:i:s', strtotime($fechaInicio));
     $fechaFinFormatted    = date('Y-m-d H:i:s', strtotime($fechaFin));
 
-    // Consulta
-    $sql = "SELECT lat, lon, CONCAT(fecha, ' ', hora) AS timestamp, id
+    // Consulta incluyendo RPM
+    $sql = "SELECT lat, lon, rpm, CONCAT(fecha, ' ', hora) AS timestamp, id
             FROM locations2
             WHERE CONCAT(fecha, ' ', hora) >= ?
               AND CONCAT(fecha, ' ', hora) <= ?
@@ -97,7 +97,8 @@ try {
             if ($row["lat"] !== null && $row["lon"] !== null) {
                 $data[] = [
                     "lat"       => (float)$row["lat"],
-                    "lng"       => (float)$row["lon"],  // tu frontend espera 'lng'
+                    "lng"       => (float)$row["lon"],
+                    "rpm"       => (int)$row["rpm"],
                     "timestamp" => $row["timestamp"]
                 ];
             }
