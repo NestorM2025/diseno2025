@@ -51,18 +51,28 @@ while True:
         data_json = json.loads(mensaje)
 
         # Extraer valores
+        device_id = int(data_json["ID"])  # ID del dispositivo
         lat = float(data_json["Latitud"])
         lon = float(data_json["Longitud"])
         fecha = data_json["Fecha"]   # formato: YYYY-MM-DD
         hora = data_json["Hora"]     # formato: HH:MM:SS
         rpm = int(data_json.get("RPM", 0))  # Obtener RPM, default 0 si no existe
 
-        # Insertar en la base
-        sql = "INSERT INTO locations2 (lat, lon, fecha, hora, rpm) VALUES (%s, %s, %s, %s, %s)"
+        # Seleccionar la tabla según el device_id
+        if device_id == 1:
+            tabla = "locations2"
+        elif device_id == 2:
+            tabla = "vehiculo2"
+        else:
+            print(f"⚠️  ID de dispositivo desconocido: {device_id}. No se guardó.")
+            continue
+
+        # Insertar en la tabla correspondiente (sin guardar device_id)
+        sql = f"INSERT INTO {tabla} (lat, lon, fecha, hora, rpm) VALUES (%s, %s, %s, %s, %s)"
         cursor.execute(sql, (lat, lon, fecha, hora, rpm))
         db.commit()
 
-        print(f"✅ Guardado en DB -> lat:{lat}, lon:{lon}, fecha:{fecha}, hora:{hora}, rpm:{rpm}")
+        print(f"✅ Guardado en tabla '{tabla}' -> lat:{lat}, lon:{lon}, fecha:{fecha}, hora:{hora}, rpm:{rpm}")
 
     except json.JSONDecodeError:
         print("❌ Error: No se pudo decodificar el JSON")
