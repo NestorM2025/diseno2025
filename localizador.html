@@ -79,7 +79,7 @@
     .input-group {
       display: flex;
       flex-direction: column;
-      min-width: 200px;
+      min-width: 150px;
     }
 
     .input-group label {
@@ -94,6 +94,7 @@
       border-radius: 5px;
       font-size: 0.9rem;
       background-color: white;
+      cursor: pointer;
     }
 
     .info-section {
@@ -221,6 +222,13 @@
     <div class="controls-card">
       <div class="radio-controls">
         <div class="input-group">
+          <label for="vehiculo-select">Vehículo:</label>
+          <select id="vehiculo-select" name="vehiculo-select">
+            <option value="1">🚗 Vehículo 1</option>
+            <option value="2">🚙 Vehículo 2</option>
+          </select>
+        </div>
+        <div class="input-group">
           <label for="radio-busqueda">Radio de Búsqueda:</label>
           <select id="radio-busqueda" name="radio-busqueda">
             <option value="200">200 metros</option>
@@ -232,7 +240,7 @@
       </div>
       
       <div id="info" class="info-section">
-        <b>Haz clic en el mapa para colocar un marcador y buscar rutas cercanas</b>
+        <b>Selecciona un vehículo y haz clic en el mapa para buscar rutas cercanas</b>
       </div>
 
       <div id="route-slider-container" class="route-slider-container" style="display: none;">
@@ -292,7 +300,8 @@ function limpiarMapa() {
   rutaActual = 0;
   mostrandoTodas = false;
   document.getElementById('route-slider-container').style.display = 'none';
-  document.getElementById("info").innerHTML = `<b>Haz clic en el mapa para colocar un marcador y buscar rutas cercanas</b>`;
+  const vehiculoNombre = document.getElementById('vehiculo-select').value === '1' ? 'Vehículo 1 🚗' : 'Vehículo 2 🚙';
+  document.getElementById("info").innerHTML = `<b>Selecciona ${vehiculoNombre} y haz clic en el mapa para buscar rutas cercanas</b>`;
 }
 
 function limpiarRutas() {
@@ -342,6 +351,8 @@ function mostrarRuta(indice) {
   
   const ruta = rutasData[indice];
   const color = routeColors[indice % routeColors.length];
+  const vehiculoId = document.getElementById('vehiculo-select').value;
+  const vehiculoNombre = vehiculoId === '1' ? 'Vehículo 1 🚗' : 'Vehículo 2 🚙';
   
   const routePoints = ruta.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
   
@@ -356,7 +367,6 @@ function mostrarRuta(indice) {
   }
   
   const startPoint = ruta[0];
-  console.log('Punto de inicio:', startPoint); // DEBUG
   
   const startMarker = L.marker([startPoint.lat, startPoint.lng], {
     icon: L.icon({
@@ -370,7 +380,7 @@ function mostrarRuta(indice) {
   }).addTo(map);
   
   startMarker.bindPopup(`
-    <b>Ruta ${indice + 1} - Inicio:</b><br>
+    <b>${vehiculoNombre} - Ruta ${indice + 1} - Inicio:</b><br>
     ${formatearFechaLegible(startPoint.timestamp)}<br>
     <b>Lat:</b> ${startPoint.lat}<br>
     <b>Lon:</b> ${startPoint.lng}<br>
@@ -381,7 +391,6 @@ function mostrarRuta(indice) {
   
   if (ruta.length > 1) {
     const endPoint = ruta[ruta.length - 1];
-    console.log('Punto final:', endPoint); // DEBUG
     
     const endMarker = L.marker([endPoint.lat, endPoint.lng], {
       icon: L.icon({
@@ -395,7 +404,7 @@ function mostrarRuta(indice) {
     }).addTo(map);
     
     endMarker.bindPopup(`
-      <b>Ruta ${indice + 1} - Fin:</b><br>
+      <b>${vehiculoNombre} - Ruta ${indice + 1} - Fin:</b><br>
       ${formatearFechaLegible(endPoint.timestamp)}<br>
       <b>Lat:</b> ${endPoint.lat}<br>
       <b>Lon:</b> ${endPoint.lng}<br>
@@ -408,10 +417,10 @@ function mostrarRuta(indice) {
   const inicio = formatearFechaLegible(ruta[0].timestamp);
   const fin = ruta.length > 1 ? formatearFechaLegible(ruta[ruta.length - 1].timestamp) : inicio;
   
-  document.getElementById('route-counter').textContent = `Ruta ${indice + 1} de ${rutasData.length}`;
+  document.getElementById('route-counter').textContent = `${vehiculoNombre} - Ruta ${indice + 1} de ${rutasData.length}`;
   document.getElementById('route-details').innerHTML = `
     <div style="border-left: 4px solid ${color}; padding-left: 10px;">
-      <b style="color: ${color}; font-size: 1.1em;">Ruta ${indice + 1}</b><br>
+      <b style="color: ${color}; font-size: 1.1em;">${vehiculoNombre} - Ruta ${indice + 1}</b><br>
       <b>📍 Puntos:</b> ${ruta.length}<br>
       <b>🕐 Inicio:</b> ${inicio}<br>
       ${ruta.length > 1 ? `<b>🏁 Fin:</b> ${fin}` : ''}
@@ -439,6 +448,8 @@ function mostrarTodasLasRutas() {
   
   mostrandoTodas = true;
   let allPoints = [];
+  const vehiculoId = document.getElementById('vehiculo-select').value;
+  const vehiculoNombre = vehiculoId === '1' ? 'Vehículo 1 🚗' : 'Vehículo 2 🚙';
   
   rutasData.forEach((ruta, index) => {
     if (ruta.length === 0) return;
@@ -470,7 +481,7 @@ function mostrarTodasLasRutas() {
     }).addTo(map);
     
     startMarker.bindPopup(`
-      <b>Ruta ${index + 1} - Inicio:</b><br>
+      <b>${vehiculoNombre} - Ruta ${index + 1} - Inicio:</b><br>
       ${formatearFechaLegible(startPoint.timestamp)}<br>
       <b>Lat:</b> ${startPoint.lat}<br>
       <b>Lon:</b> ${startPoint.lng}<br>
@@ -493,7 +504,7 @@ function mostrarTodasLasRutas() {
       }).addTo(map);
       
       endMarker.bindPopup(`
-        <b>Ruta ${index + 1} - Fin:</b><br>
+        <b>${vehiculoNombre} - Ruta ${index + 1} - Fin:</b><br>
         ${formatearFechaLegible(endPoint.timestamp)}<br>
         <b>Lat:</b> ${endPoint.lat}<br>
         <b>Lon:</b> ${endPoint.lng}<br>
@@ -504,9 +515,9 @@ function mostrarTodasLasRutas() {
     }
   });
   
-  document.getElementById('route-counter').textContent = `Mostrando todas las rutas (${rutasData.length})`;
+  document.getElementById('route-counter').textContent = `${vehiculoNombre} - Mostrando todas las rutas (${rutasData.length})`;
   
-  let detailsHTML = '<div><b style="font-size: 1.1em;">Todas las Rutas:</b><br>';
+  let detailsHTML = `<div><b style="font-size: 1.1em;">${vehiculoNombre} - Todas las Rutas:</b><br>`;
   rutasData.forEach((ruta, index) => {
     const color = routeColors[index % routeColors.length];
     const inicio = formatearFechaLegible(ruta[0].timestamp);
@@ -529,10 +540,13 @@ function mostrarTodasLasRutas() {
 }
 
 async function consultarUbicacionesCercanas(lat, lng, radio) {
-  document.getElementById("info").innerHTML = `<b>Buscando ubicaciones dentro de ${radio}m del punto seleccionado...</b>`;
+  const vehiculoId = document.getElementById('vehiculo-select').value;
+  const vehiculoNombre = vehiculoId === '1' ? 'Vehículo 1 🚗' : 'Vehículo 2 🚙';
+  
+  document.getElementById("info").innerHTML = `<b>Buscando ubicaciones de ${vehiculoNombre} dentro de ${radio}m del punto seleccionado...</b>`;
   
   try {
-    const url = `localizador.php?lat=${lat}&lng=${lng}&radio=${radio}`;
+    const url = `localizador.php?vehiculo_id=${vehiculoId}&lat=${lat}&lng=${lng}&radio=${radio}`;
     console.log('Consultando URL:', url);
     
     const response = await fetch(url);
@@ -574,7 +588,6 @@ async function consultarUbicacionesCercanas(lat, lng, radio) {
     }
     
     console.log(`Total de puntos recibidos: ${locationData.length}`);
-    console.log('Primer punto (para verificar RPM):', locationData[0]); // DEBUG
     
     if (locationData.length > 0) {
       const puntosValidos = locationData.filter(point => 
@@ -584,7 +597,7 @@ async function consultarUbicacionesCercanas(lat, lng, radio) {
       );
       
       if (puntosValidos.length === 0) {
-        document.getElementById("info").innerHTML = `<b>No se encontraron ubicaciones válidas dentro del radio de ${radio}m.</b>`;
+        document.getElementById("info").innerHTML = `<b>No se encontraron ubicaciones válidas de ${vehiculoNombre} dentro del radio de ${radio}m.</b>`;
         return;
       }
       
@@ -594,7 +607,7 @@ async function consultarUbicacionesCercanas(lat, lng, radio) {
       let totalPuntos = rutasData.reduce((sum, ruta) => sum + ruta.length, 0);
       
       document.getElementById("info").innerHTML = `
-        <b>📊 Resultados:</b> ${totalPuntos} punto${totalPuntos > 1 ? 's' : ''} en ${rutasData.length} ruta${rutasData.length > 1 ? 's' : ''}<br>
+        <b>📊 ${vehiculoNombre} - Resultados:</b> ${totalPuntos} punto${totalPuntos > 1 ? 's' : ''} en ${rutasData.length} ruta${rutasData.length > 1 ? 's' : ''}<br>
         <b>🎯 Radio de búsqueda:</b> ${radio}m
       `;
       
@@ -603,7 +616,7 @@ async function consultarUbicacionesCercanas(lat, lng, radio) {
       mostrarRuta(0);
       
     } else {
-      document.getElementById("info").innerHTML = `<b>No se encontraron ubicaciones dentro del radio de ${radio}m.</b>`;
+      document.getElementById("info").innerHTML = `<b>No se encontraron ubicaciones de ${vehiculoNombre} dentro del radio de ${radio}m.</b>`;
       document.getElementById('route-slider-container').style.display = 'none';
     }
     
@@ -645,6 +658,10 @@ map.on('click', function(e) {
   }).addTo(map);
   
   consultarUbicacionesCercanas(lat, lng, radio);
+});
+
+document.getElementById('vehiculo-select').addEventListener('change', function() {
+  limpiarMapa();
 });
 
 document.getElementById('radio-busqueda').addEventListener('change', function() {

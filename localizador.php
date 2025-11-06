@@ -38,10 +38,25 @@ if ($conn->connect_error) {
 }
 
 try {
-    // Obtener parámetros de ubicación y radio
-    $lat   = $_GET['lat'] ?? null;
-    $lng   = $_GET['lng'] ?? null;
-    $radio = $_GET['radio'] ?? 500; // Radio por defecto: 500 metros
+    // Obtener parámetros
+    $vehiculoId = $_GET['vehiculo_id'] ?? '1';
+    $lat        = $_GET['lat'] ?? null;
+    $lng        = $_GET['lng'] ?? null;
+    $radio      = $_GET['radio'] ?? 500; // Radio por defecto: 500 metros
+
+    // Validar vehículo ID
+    if (!in_array($vehiculoId, ['1', '2'])) {
+        ob_clean();
+        echo json_encode([
+            'error'     => 'vehiculo_id debe ser 1 o 2',
+            'pageName'  => $pageName,
+            'locations' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // Seleccionar la tabla según el vehículo
+    $tabla = ($vehiculoId === '1') ? 'locations2' : 'vehiculo2';
 
     if ($lat === null || $lng === null) {
         ob_clean();
@@ -99,7 +114,7 @@ try {
                     sin(radians(?)) * 
                     sin(radians(lat))
                 )) AS distancia
-            FROM locations2
+            FROM $tabla
             HAVING distancia <= ?
             ORDER BY id ASC";
 
@@ -135,18 +150,24 @@ try {
     }
     $stmt->close();
 
+    // Nombre del vehículo
+    $vehiculoNombre = ($vehiculoId === '1') ? 'Vehículo 1' : 'Vehículo 2';
+
     // Enviar JSON limpio
     ob_clean();
     echo json_encode([
-        "success"      => true,
-        "total"        => count($data),
+        "success"        => true,
+        "vehiculo_id"    => $vehiculoId,
+        "vehiculo_nombre" => $vehiculoNombre,
+        "tabla"          => $tabla,
+        "total"          => count($data),
         "punto_busqueda" => [
             "lat"   => $lat,
             "lng"   => $lng
         ],
-        "radio_metros" => $radio,
-        "pageName"     => $pageName . " - Localizador",
-        "locations"    => $data
+        "radio_metros"   => $radio,
+        "pageName"       => $pageName . " - Localizador",
+        "locations"      => $data
     ], JSON_UNESCAPED_UNICODE);
     exit;
 
