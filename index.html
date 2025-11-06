@@ -9,17 +9,30 @@
 </head>
 <body>
   <header class="header-bar">
-  <h1 id="page-header">Localizador</h1>
+    <h1 id="page-header">Localizador</h1>
     <div class="buttons">
       <a href="historico.html" class="btn-historico">Histórico</a>
       <a href="localizador.html" class="btn-localizador">Localizador</a>
     </div>
   </header>
 
-
-
   <main class="container">
-    <div id="info" class="info-card">
+    <!-- Botones para centrar la vista -->
+    <div class="vehicle-selector">
+      <button id="centerVehicle1" class="btn-vehicle active">Centrar en Vehículo 1</button>
+      <button id="centerVehicle2" class="btn-vehicle">Centrar en Vehículo 2</button>
+      <button id="centerBoth" class="btn-vehicle">Ver Ambos</button>
+    </div>
+
+    <!-- Información de Vehículo 1 -->
+    <div id="info1" class="info-card vehicle1-card">
+      <div class="vehicle-label">🚗 Vehículo 1</div>
+      <b>Esperando datos...</b>
+    </div>
+
+    <!-- Información de Vehículo 2 -->
+    <div id="info2" class="info-card vehicle2-card">
+      <div class="vehicle-label">🚙 Vehículo 2</div>
       <b>Esperando datos...</b>
     </div>
 
@@ -31,3 +44,4 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="js/script.js"></script>
 </body>
+</html>
