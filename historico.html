@@ -19,6 +19,13 @@
     <div class="controls-card">
       <div class="date-controls">
         <div class="input-group">
+          <label for="vehiculo-select">Vehículo:</label>
+          <select id="vehiculo-select" name="vehiculo-select">
+            <option value="1">🚗 Vehículo 1</option>
+            <option value="2">🚙 Vehículo 2</option>
+          </select>
+        </div>
+        <div class="input-group">
           <label for="fecha-inicio">Fecha de Inicio:</label>
           <input type="datetime-local" id="fecha-inicio" name="fecha-inicio">
         </div>
@@ -31,7 +38,7 @@
     </div>
 
     <div id="info" class="info-card">
-      <b>Selecciona un rango de fechas para ver el recorrido histórico</b>
+      <b>Selecciona un vehículo y un rango de fechas para ver el recorrido histórico</b>
     </div>
 
     <div class="map-container">
@@ -68,6 +75,7 @@ function limpiarMapa() {
 
 // Función para consultar recorrido histórico
 async function consultarRecorrido() {
+  const vehiculoId = document.getElementById('vehiculo-select').value;
   const fechaInicio = document.getElementById('fecha-inicio').value;
   const fechaFin = document.getElementById('fecha-fin').value;
   
@@ -89,13 +97,15 @@ async function consultarRecorrido() {
   btnConsultar.disabled = true;
   btnConsultar.textContent = 'Cargando...';
   
+  const vehiculoNombre = vehiculoId === '1' ? 'Vehículo 1 🚗' : 'Vehículo 2 🚙';
+  
   document.getElementById("info").innerHTML = `
-    <b>Consultando datos desde ${formatearFechaLegible(fechaInicio)} hasta ${formatearFechaLegible(fechaFin)}...</b>
+    <b>Consultando datos de ${vehiculoNombre} desde ${formatearFechaLegible(fechaInicio)} hasta ${formatearFechaLegible(fechaFin)}...</b>
   `;
   
   try {
-    // Construir URL con parámetros de fecha
-    const url = `historico.php?fecha_inicio=${encodeURIComponent(fechaInicio)}&fecha_fin=${encodeURIComponent(fechaFin)}`;
+    // Construir URL con parámetros de fecha y vehículo
+    const url = `historico.php?vehiculo_id=${vehiculoId}&fecha_inicio=${encodeURIComponent(fechaInicio)}&fecha_fin=${encodeURIComponent(fechaFin)}`;
     
     console.log('Consultando URL:', url); // Para debug
     
@@ -165,7 +175,7 @@ async function consultarRecorrido() {
       
       if (puntosValidos.length === 0) {
         document.getElementById("info").innerHTML = `
-          <b>No se encontraron puntos con coordenadas válidas para el período seleccionado.</b>
+          <b>No se encontraron puntos con coordenadas válidas para el ${vehiculoNombre} en el período seleccionado.</b>
         `;
         return;
       }
@@ -173,10 +183,13 @@ async function consultarRecorrido() {
       // Crear array de puntos para la polyline
       const routePoints = puntosValidos.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
       
+      // Color según el vehículo
+      const routeColor = vehiculoId === '1' ? 'blue' : 'red';
+      
       // Crear polyline solo si hay más de 1 punto
       if (routePoints.length > 1) {
         polyline = L.polyline(routePoints, {
-          color: 'blue',
+          color: routeColor,
           weight: 3,
           opacity: 0.7,
           smoothFactor: 1
@@ -202,7 +215,7 @@ async function consultarRecorrido() {
         })
       }).addTo(map);
 
-      startMarker.bindPopup(`<b>Inicio:</b><br>${startPoint.timestamp}<br><b>Lat:</b> ${startPoint.lat}<br><b>Lon:</b> ${startPoint.lng}<br><b>RPM:</b> ${startPoint.rpm || 'N/A'}`);
+      startMarker.bindPopup(`<b>Inicio ${vehiculoNombre}:</b><br>${startPoint.timestamp}<br><b>Lat:</b> ${startPoint.lat}<br><b>Lon:</b> ${startPoint.lng}<br><b>RPM:</b> ${startPoint.rpm || 'N/A'}`);
       markers.push(startMarker);
 
       // Solo añadir marcador de fin si hay más de un punto
@@ -219,7 +232,7 @@ async function consultarRecorrido() {
           })
         }).addTo(map);
         
-        endMarker.bindPopup(`<b>Fin:</b><br>${endPoint.timestamp}<br><b>Lat:</b> ${endPoint.lat}<br><b>Lon:</b> ${endPoint.lng}<br><b>RPM:</b> ${endPoint.rpm || 'N/A'}`);
+        endMarker.bindPopup(`<b>Fin ${vehiculoNombre}:</b><br>${endPoint.timestamp}<br><b>Lat:</b> ${endPoint.lat}<br><b>Lon:</b> ${endPoint.lng}<br><b>RPM:</b> ${endPoint.rpm || 'N/A'}`);
         markers.push(endMarker);
       }
       
@@ -228,13 +241,13 @@ async function consultarRecorrido() {
       const fin = puntosValidos.length > 1 ? formatearFechaLegible(puntosValidos[puntosValidos.length - 1].timestamp) : inicio;
       
       document.getElementById("info").innerHTML = `
-        <b>Recorrido encontrado:</b> ${puntosValidos.length} punto${puntosValidos.length > 1 ? 's' : ''} | 
+        <b>${vehiculoNombre} - Recorrido encontrado:</b> ${puntosValidos.length} punto${puntosValidos.length > 1 ? 's' : ''} | 
         <b>Inicio:</b> ${inicio} ${puntosValidos.length > 1 ? `| <b>Fin:</b> ${fin}` : ''}
       `;
       
     } else {
       document.getElementById("info").innerHTML = `
-        <b>No se encontraron datos para el período seleccionado.</b><br>
+        <b>No se encontraron datos para el ${vehiculoNombre} en el período seleccionado.</b><br>
         <small>Verifica que existan registros en las fechas consultadas.</small>
       `;
     }
@@ -387,7 +400,7 @@ establecerFechasPorDefecto();
     .input-group {
       display: flex;
       flex-direction: column;
-      min-width: 200px;
+      min-width: 150px;
     }
 
     .input-group label {
@@ -396,11 +409,17 @@ establecerFechasPorDefecto();
       color: #333;
     }
 
-    .input-group input {
+    .input-group input,
+    .input-group select {
       padding: 0.5rem;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 0.9rem;
+    }
+
+    .input-group select {
+      cursor: pointer;
+      background-color: white;
     }
 
     .btn-primary {
