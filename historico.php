@@ -17,7 +17,7 @@ if (!$env) {
     exit;
 }
 
-$host     = $env['DB_HOST'] ;
+$host     = $env['DB_HOST'];
 $user     = $env['DB_USER'];
 $pass     = $env['DB_PASS'];
 $dbname   = $env['DB_NAME'];
@@ -38,9 +38,24 @@ if ($conn->connect_error) {
 }
 
 try {
-    // Obtener parámetros de fecha
+    // Obtener parámetros
+    $vehiculoId  = $_GET['vehiculo_id'] ?? '1';
     $fechaInicio = $_GET['fecha_inicio'] ?? null;
     $fechaFin    = $_GET['fecha_fin'] ?? null;
+
+    // Validar vehículo ID
+    if (!in_array($vehiculoId, ['1', '2'])) {
+        ob_clean();
+        echo json_encode([
+            'error'     => 'vehiculo_id debe ser 1 o 2',
+            'pageName'  => $pageName,
+            'locations' => []
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // Seleccionar la tabla según el vehículo
+    $tabla = ($vehiculoId === '1') ? 'locations2' : 'vehiculo2';
 
     if (!$fechaInicio || !$fechaFin) {
         ob_clean();
@@ -69,9 +84,9 @@ try {
     $fechaInicioFormatted = date('Y-m-d H:i:s', strtotime($fechaInicio));
     $fechaFinFormatted    = date('Y-m-d H:i:s', strtotime($fechaFin));
 
-    // Consulta incluyendo RPM
+    // Consulta incluyendo RPM - usar la tabla correspondiente
     $sql = "SELECT lat, lon, rpm, CONCAT(fecha, ' ', hora) AS timestamp, id
-            FROM locations2
+            FROM $tabla
             WHERE CONCAT(fecha, ' ', hora) >= ?
               AND CONCAT(fecha, ' ', hora) <= ?
             ORDER BY id ASC";
@@ -106,10 +121,16 @@ try {
     }
     $stmt->close();
 
+    // Nombre del vehículo
+    $vehiculoNombre = ($vehiculoId === '1') ? 'Vehículo 1' : 'Vehículo 2';
+
     // Enviar JSON limpio
     ob_clean();
     echo json_encode([
         "success"         => true,
+        "vehiculo_id"     => $vehiculoId,
+        "vehiculo_nombre" => $vehiculoNombre,
+        "tabla"           => $tabla,
         "total"           => count($data),
         "fecha_inicio"    => $fechaInicio,
         "fecha_fin"       => $fechaFin,
