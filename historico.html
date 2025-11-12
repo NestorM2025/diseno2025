@@ -23,6 +23,7 @@
           <select id="vehiculo-select" name="vehiculo-select">
             <option value="1">🚗 Vehículo 1</option>
             <option value="2">🚙 Vehículo 2</option>
+            <option value="ambos">🚗🚙 Ambos Vehículos</option>
           </select>
         </div>
         <div class="input-group">
@@ -56,16 +57,16 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors"
 }).addTo(map);
 
-let polyline = null;
+let polylines = [];
 let markers = [];
 let pageNameSet = false;
 
 // Función para limpiar el mapa
 function limpiarMapa() {
-  if (polyline) {
+  polylines.forEach(polyline => {
     map.removeLayer(polyline);
-    polyline = null;
-  }
+  });
+  polylines = [];
   
   markers.forEach(marker => {
     map.removeLayer(marker);
@@ -97,6 +98,18 @@ async function consultarRecorrido() {
   btnConsultar.disabled = true;
   btnConsultar.textContent = 'Cargando...';
   
+  if (vehiculoId === 'ambos') {
+    await consultarAmbosVehiculos(fechaInicio, fechaFin);
+  } else {
+    await consultarUnVehiculo(vehiculoId, fechaInicio, fechaFin);
+  }
+  
+  // Rehabilitar botón
+  btnConsultar.disabled = false;
+  btnConsultar.textContent = 'Consultar Recorrido';
+}
+
+async function consultarUnVehiculo(vehiculoId, fechaInicio, fechaFin) {
   const vehiculoNombre = vehiculoId === '1' ? 'Vehículo 1 🚗' : 'Vehículo 2 🚙';
   
   document.getElementById("info").innerHTML = `
@@ -104,10 +117,7 @@ async function consultarRecorrido() {
   `;
   
   try {
-    // Construir URL con parámetros de fecha y vehículo
     const url = `historico.php?vehiculo_id=${vehiculoId}&fecha_inicio=${encodeURIComponent(fechaInicio)}&fecha_fin=${encodeURIComponent(fechaFin)}`;
-    
-    console.log('Consultando URL:', url); // Para debug
     
     const response = await fetch(url);
     
@@ -115,58 +125,39 @@ async function consultarRecorrido() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    // Obtener el texto crudo primero para debug
     const responseText = await response.text();
-    console.log('Respuesta cruda del servidor:', responseText);
-    
-    // Intentar parsear como JSON
     let data;
+    
     try {
       data = JSON.parse(responseText);
-      console.log('Datos parseados correctamente:', data);
     } catch (jsonError) {
       console.error('Error parseando JSON:', jsonError);
-      console.error('Respuesta que causó el error:', responseText);
       document.getElementById("info").innerHTML = `
-        <b style="color: red;">Error:</b> Respuesta inválida del servidor.<br>
-        <small>Revisa la consola para más detalles</small>
+        <b style="color: red;">Error:</b> Respuesta inválida del servidor.
       `;
       return;
     }
     
-    console.log('Datos recibidos:', data); // Para debug
-    
-    // Verificar si hay error en la respuesta
     if (data.error) {
       document.getElementById("info").innerHTML = `
-        <b style="color: red;">Error:</b> ${data.error}<br>
-        <small>${data.message || 'Revisa la configuración del servidor'}</small>
+        <b style="color: red;">Error:</b> ${data.error}
       `;
       return;
     }
     
-    // Establecer el nombre de la página si viene en los datos
     if (!pageNameSet && data.pageName) {
       document.title = data.pageName;
       pageNameSet = true;
     }
     
-    // Procesar datos de ubicación - manejo más flexible
     let locationData = [];
     if (Array.isArray(data)) {
       locationData = data;
     } else if (data.locations && Array.isArray(data.locations)) {
       locationData = data.locations;
-    } else if (data.data && Array.isArray(data.data)) {
-      locationData = data.data;
-    } else if (data.lat && data.lng) {
-      locationData = [data]; // Un solo punto
     }
     
-    console.log(`Procesando ${locationData.length} puntos`); // Para debug
-    
     if (locationData.length > 0) {
-      // Filtrar puntos con coordenadas válidas
       const puntosValidos = locationData.filter(point => 
         point.lat && point.lng && 
         !isNaN(parseFloat(point.lat)) && 
@@ -175,69 +166,31 @@ async function consultarRecorrido() {
       
       if (puntosValidos.length === 0) {
         document.getElementById("info").innerHTML = `
-          <b>No se encontraron puntos con coordenadas válidas para el ${vehiculoNombre} en el período seleccionado.</b>
+          <b>No se encontraron puntos válidos para el ${vehiculoNombre}.</b>
         `;
         return;
       }
       
-      // Crear array de puntos para la polyline
       const routePoints = puntosValidos.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
-      
-      // Color según el vehículo
       const routeColor = vehiculoId === '1' ? 'blue' : 'red';
       
-      // Crear polyline solo si hay más de 1 punto
       if (routePoints.length > 1) {
-        polyline = L.polyline(routePoints, {
+        const polyline = L.polyline(routePoints, {
           color: routeColor,
           weight: 3,
           opacity: 0.7,
           smoothFactor: 1
         }).addTo(map);
+        polylines.push(polyline);
         
-        // Ajustar vista del mapa para mostrar todo el recorrido
         map.fitBounds(polyline.getBounds(), { padding: [20, 20] });
       } else {
-        // Solo un punto, centrar en él
         map.setView([routePoints[0][0], routePoints[0][1]], 15);
       }
       
-      // Añadir marcador de inicio (verde)
-      const startPoint = puntosValidos[0];
-      const startMarker = L.marker([startPoint.lat, startPoint.lng], {
-        icon: L.icon({
-          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        })
-      }).addTo(map);
-
-      startMarker.bindPopup(`<b>Inicio ${vehiculoNombre}:</b><br>${startPoint.timestamp}<br><b>Lat:</b> ${startPoint.lat}<br><b>Lon:</b> ${startPoint.lng}<br><b>RPM:</b> ${startPoint.rpm || 'N/A'}`);
-      markers.push(startMarker);
-
-      // Solo añadir marcador de fin si hay más de un punto
-      if (puntosValidos.length > 1) {
-        const endPoint = puntosValidos[puntosValidos.length - 1];
-        const endMarker = L.marker([endPoint.lat, endPoint.lng], {
-          icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-          })
-        }).addTo(map);
-        
-        endMarker.bindPopup(`<b>Fin ${vehiculoNombre}:</b><br>${endPoint.timestamp}<br><b>Lat:</b> ${endPoint.lat}<br><b>Lon:</b> ${endPoint.lng}<br><b>RPM:</b> ${endPoint.rpm || 'N/A'}`);
-        markers.push(endMarker);
-      }
+      agregarMarcadores(puntosValidos, vehiculoNombre, vehiculoId);
       
-      // Mostrar información del recorrido
-      const inicio = formatearFechaLegible(startPoint.timestamp);
+      const inicio = formatearFechaLegible(puntosValidos[0].timestamp);
       const fin = puntosValidos.length > 1 ? formatearFechaLegible(puntosValidos[puntosValidos.length - 1].timestamp) : inicio;
       
       document.getElementById("info").innerHTML = `
@@ -247,21 +200,194 @@ async function consultarRecorrido() {
       
     } else {
       document.getElementById("info").innerHTML = `
-        <b>No se encontraron datos para el ${vehiculoNombre} en el período seleccionado.</b><br>
-        <small>Verifica que existan registros en las fechas consultadas.</small>
+        <b>No se encontraron datos para el ${vehiculoNombre} en el período seleccionado.</b>
       `;
     }
     
   } catch (err) {
-    console.error("❌ Error consultando datos históricos:", err);
+    console.error("❌ Error:", err);
     document.getElementById("info").innerHTML = `
-      <b style="color: red;">Error:</b> No se pudieron cargar los datos históricos.<br>
-      <small>Error: ${err.message}</small>
+      <b style="color: red;">Error:</b> ${err.message}
     `;
-  } finally {
-    // Rehabilitar botón
-    btnConsultar.disabled = false;
-    btnConsultar.textContent = 'Consultar Recorrido';
+  }
+}
+
+async function consultarAmbosVehiculos(fechaInicio, fechaFin) {
+  document.getElementById("info").innerHTML = `
+    <b>Consultando datos de ambos vehículos desde ${formatearFechaLegible(fechaInicio)} hasta ${formatearFechaLegible(fechaFin)}...</b>
+  `;
+  
+  try {
+    // Consultar ambos vehículos en paralelo
+    const [response1, response2] = await Promise.all([
+      fetch(`historico.php?vehiculo_id=1&fecha_inicio=${encodeURIComponent(fechaInicio)}&fecha_fin=${encodeURIComponent(fechaFin)}`),
+      fetch(`historico.php?vehiculo_id=2&fecha_inicio=${encodeURIComponent(fechaInicio)}&fecha_fin=${encodeURIComponent(fechaFin)}`)
+    ]);
+    
+    if (!response1.ok || !response2.ok) {
+      throw new Error('Error en las consultas');
+    }
+    
+    const [text1, text2] = await Promise.all([
+      response1.text(),
+      response2.text()
+    ]);
+    
+    let data1, data2;
+    try {
+      data1 = JSON.parse(text1);
+      data2 = JSON.parse(text2);
+    } catch (jsonError) {
+      console.error('Error parseando JSON:', jsonError);
+      document.getElementById("info").innerHTML = `
+        <b style="color: red;">Error:</b> Respuesta inválida del servidor.
+      `;
+      return;
+    }
+    
+    if (!pageNameSet && data1.pageName) {
+      document.title = data1.pageName;
+      pageNameSet = true;
+    }
+    
+    // Procesar Vehículo 1
+    let puntos1 = [];
+    if (data1.locations && Array.isArray(data1.locations)) {
+      puntos1 = data1.locations.filter(point => 
+        point.lat && point.lng && 
+        !isNaN(parseFloat(point.lat)) && 
+        !isNaN(parseFloat(point.lng))
+      );
+    }
+    
+    // Procesar Vehículo 2
+    let puntos2 = [];
+    if (data2.locations && Array.isArray(data2.locations)) {
+      puntos2 = data2.locations.filter(point => 
+        point.lat && point.lng && 
+        !isNaN(parseFloat(point.lat)) && 
+        !isNaN(parseFloat(point.lng))
+      );
+    }
+    
+    if (puntos1.length === 0 && puntos2.length === 0) {
+      document.getElementById("info").innerHTML = `
+        <b>No se encontraron datos para ningún vehículo en el período seleccionado.</b>
+      `;
+      return;
+    }
+    
+    const allBounds = L.latLngBounds();
+    
+    // Dibujar recorrido Vehículo 1
+    if (puntos1.length > 0) {
+      const routePoints1 = puntos1.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+      
+      if (routePoints1.length > 1) {
+        const polyline1 = L.polyline(routePoints1, {
+          color: 'blue',
+          weight: 3,
+          opacity: 0.7,
+          smoothFactor: 1
+        }).addTo(map);
+        polylines.push(polyline1);
+        
+        routePoints1.forEach(point => allBounds.extend(point));
+      }
+      
+      agregarMarcadores(puntos1, 'Vehículo 1 🚗', '1');
+    }
+    
+    // Dibujar recorrido Vehículo 2
+    if (puntos2.length > 0) {
+      const routePoints2 = puntos2.map(point => [parseFloat(point.lat), parseFloat(point.lng)]);
+      
+      if (routePoints2.length > 1) {
+        const polyline2 = L.polyline(routePoints2, {
+          color: 'red',
+          weight: 3,
+          opacity: 0.7,
+          smoothFactor: 1
+        }).addTo(map);
+        polylines.push(polyline2);
+        
+        routePoints2.forEach(point => allBounds.extend(point));
+      }
+      
+      agregarMarcadores(puntos2, 'Vehículo 2 🚙', '2');
+    }
+    
+    // Ajustar vista para mostrar ambos recorridos
+    if (allBounds.isValid()) {
+      map.fitBounds(allBounds, { padding: [30, 30] });
+    }
+    
+    // Mostrar resumen
+    const totalPuntos = puntos1.length + puntos2.length;
+    document.getElementById("info").innerHTML = `
+      <b>📊 Resultados de ambos vehículos:</b><br>
+      <span style="color: blue;">🚗 Vehículo 1:</span> ${puntos1.length} punto${puntos1.length !== 1 ? 's' : ''}<br>
+      <span style="color: red;">🚙 Vehículo 2:</span> ${puntos2.length} punto${puntos2.length !== 1 ? 's' : ''}<br>
+      <b>Total:</b> ${totalPuntos} puntos
+    `;
+    
+  } catch (err) {
+    console.error("❌ Error:", err);
+    document.getElementById("info").innerHTML = `
+      <b style="color: red;">Error:</b> ${err.message}
+    `;
+  }
+}
+
+function agregarMarcadores(puntos, vehiculoNombre, vehiculoId) {
+  if (puntos.length === 0) return;
+  
+  const iconColor = vehiculoId === '1' ? 'blue' : 'red';
+  
+  // Marcador de inicio
+  const startPoint = puntos[0];
+  const startMarker = L.marker([startPoint.lat, startPoint.lng], {
+    icon: L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    })
+  }).addTo(map);
+  
+  startMarker.bindPopup(`
+    <b>Inicio ${vehiculoNombre}:</b><br>
+    ${startPoint.timestamp}<br>
+    <b>Lat:</b> ${startPoint.lat}<br>
+    <b>Lon:</b> ${startPoint.lng}<br>
+    <b>RPM:</b> ${startPoint.rpm || 'N/A'}
+  `);
+  markers.push(startMarker);
+  
+  // Marcador de fin (solo si hay más de un punto)
+  if (puntos.length > 1) {
+    const endPoint = puntos[puntos.length - 1];
+    const endMarker = L.marker([endPoint.lat, endPoint.lng], {
+      icon: L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).addTo(map);
+    
+    endMarker.bindPopup(`
+      <b>Fin ${vehiculoNombre}:</b><br>
+      ${endPoint.timestamp}<br>
+      <b>Lat:</b> ${endPoint.lat}<br>
+      <b>Lon:</b> ${endPoint.lng}<br>
+      <b>RPM:</b> ${endPoint.rpm || 'N/A'}
+    `);
+    markers.push(endMarker);
   }
 }
 
@@ -291,14 +417,12 @@ function formatearFechaLegible(fechaString) {
   }
 }
 
-// Función para establecer fecha por defecto (últimas 24 horas)
+// Función para establecer fecha por defecto
 function establecerFechasPorDefecto() {
   const ahora = new Date();
-  // Poner el fin al momento actual
   const inicioDelDia = new Date(ahora);
-  inicioDelDia.setHours(0, 0, 0, 0); // Inicio del día actual
+  inicioDelDia.setHours(0, 0, 0, 0);
   
-  // Formatear fechas para datetime-local
   const formatoFecha = (fecha) => {
     const year = fecha.getFullYear();
     const month = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -308,7 +432,6 @@ function establecerFechasPorDefecto() {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
   
-  // Por defecto: desde las 00:00 de hoy hasta ahora
   document.getElementById('fecha-inicio').value = formatoFecha(inicioDelDia);
   document.getElementById('fecha-fin').value = formatoFecha(ahora);
 }
@@ -320,9 +443,8 @@ function validarFechas() {
   
   if (fechaInicio && fechaFin) {
     if (new Date(fechaInicio) >= new Date(fechaFin)) {
-      // Si la fecha de inicio es mayor o igual que la de fin, ajustar la fecha de fin
       const nuevaFechaFin = new Date(fechaInicio);
-      nuevaFechaFin.setHours(nuevaFechaFin.getHours() + 1); // Añadir 1 hora
+      nuevaFechaFin.setHours(nuevaFechaFin.getHours() + 1);
       
       const formatoFecha = (fecha) => {
         const year = fecha.getFullYear();
@@ -341,16 +463,11 @@ function validarFechas() {
 // Event listeners
 document.getElementById('btn-consultar').addEventListener('click', consultarRecorrido);
 window.addEventListener('resize', handleResize);
-
-// Validación de fechas en tiempo real
 document.getElementById('fecha-inicio').addEventListener('change', validarFechas);
 document.getElementById('fecha-fin').addEventListener('change', validarFechas);
-
-// Permitir consulta con Enter en los campos de fecha
 document.getElementById('fecha-inicio').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') consultarRecorrido();
 });
-
 document.getElementById('fecha-fin').addEventListener('keypress', (e) => {
   if (e.key === 'Enter') consultarRecorrido();
 });
@@ -360,7 +477,6 @@ establecerFechasPorDefecto();
   </script>
 
   <style>
-    /* Estilos adicionales para el header y botón de inicio */
     .header-container {
       display: flex;
       justify-content: space-between;
@@ -385,11 +501,6 @@ establecerFechasPorDefecto();
       background-color: #0056b3;
     }
 
-    .btn-home:active {
-      transform: translateY(1px);
-    }
-
-    /* Mejoras para los controles de fecha */
     .date-controls {
       display: flex;
       flex-wrap: wrap;
@@ -444,7 +555,6 @@ establecerFechasPorDefecto();
       cursor: not-allowed;
     }
 
-    /* Responsive design */
     @media (max-width: 768px) {
       .header-container {
         flex-direction: column;
