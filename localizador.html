@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+}<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -422,8 +422,8 @@ function mostrarRuta(indice) {
     <div style="border-left: 4px solid ${color}; padding-left: 10px;">
       <b style="color: ${color}; font-size: 1.1em;">${vehiculoNombre} - Ruta ${indice + 1}</b><br>
       <b>📍 Puntos:</b> ${ruta.length}<br>
-      <b>🕐 Inicio:</b> ${inicio}<br>
-      ${ruta.length > 1 ? `<b>🏁 Fin:</b> ${fin}` : ''}
+      <b>🕐 Inicio:</b> ${inicio} | <b>⚡ RPM:</b> ${ruta[0].rpm !== undefined ? ruta[0].rpm : 'N/A'}<br>
+      ${ruta.length > 1 ? `<b>🏁 Fin:</b> ${fin} | <b>⚡ RPM:</b> ${ruta[ruta.length - 1].rpm !== undefined ? ruta[ruta.length - 1].rpm : 'N/A'}` : ''}
     </div>
   `;
   
@@ -521,8 +521,15 @@ function mostrarTodasLasRutas() {
   rutasData.forEach((ruta, index) => {
     const color = routeColors[index % routeColors.length];
     const inicio = formatearFechaLegible(ruta[0].timestamp);
+    const rpmInicio = ruta[0].rpm !== undefined ? ruta[0].rpm : 'N/A';
+    const rpmFin = ruta.length > 1 && ruta[ruta.length - 1].rpm !== undefined ? ruta[ruta.length - 1].rpm : 'N/A';
     detailsHTML += `<div style="margin-top: 8px; border-left: 4px solid ${color}; padding-left: 10px;">`;
     detailsHTML += `<b style="color: ${color}">Ruta ${index + 1}:</b> ${ruta.length} punto${ruta.length > 1 ? 's' : ''} | ${inicio}`;
+    if (ruta.length > 1) {
+      detailsHTML += `<br><span style="font-size: 0.9em;">⚡ Inicio: ${rpmInicio} RPM | Fin: ${rpmFin} RPM</span>`;
+    } else {
+      detailsHTML += `<br><span style="font-size: 0.9em;">⚡ RPM: ${rpmInicio}</span>`;
+    }
     detailsHTML += `</div>`;
   });
   detailsHTML += '</div>';
